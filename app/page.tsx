@@ -3,20 +3,12 @@
 import type React from "react";
 import { useState } from "react";
 
-import {
-  CheckCircle,
-  Droplets,
-  Shield,
-  Phone,
-  Mail,
-  MapPin,
-  Loader2,
-} from "lucide-react";
+import { CheckCircle, Droplets, Shield, Phone, Mail, MapPin, Loader2 } from "lucide-react";
 import z from "zod";
-import Header from "@/components/Header";
 
 import { mockReportData } from "@/lib/mockdata";
 
+import Header from "@/components/Header";
 import { ModeToggle } from "@/components/mode-toggle";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
@@ -102,8 +94,6 @@ export default function WaterQualityReport() {
     e.preventDefault();
 
     if (!validateForm()) return;
-
-
   };
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -112,7 +102,6 @@ export default function WaterQualityReport() {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
-
 
   {
     return (
@@ -123,56 +112,9 @@ export default function WaterQualityReport() {
           </div>
 
           <div className="mx-auto max-w-4xl">
-            {/* Header Section */}
-          <Header/>
+            <Header />
 
-            {/* Form Section */}
             <div className="mx-auto max-w-2xl">
-              {/* Form Preview Mockup */}
-              <div className="relative mb-12">
-                <div className="rounded-2xl bg-gray-100 p-8 shadow-2xl dark:bg-gray-900">
-                  <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-black">
-                    <div className="mb-4 flex items-center">
-                      <div className="mr-4 flex space-x-2">
-                        <div className="h-3 w-3 rounded-full bg-gray-300 dark:bg-gray-700"></div>
-                        <div className="h-3 w-3 rounded-full bg-gray-300 dark:bg-gray-700"></div>
-                        <div className="h-3 w-3 rounded-full bg-gray-300 dark:bg-gray-700"></div>
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">4patriots.com</div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-3">
-                        <Droplets className="h-5 w-5 text-black dark:text-white" />
-                        <span className="font-semibold text-black dark:text-white">Water Quality Report</span>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="h-3 w-3/4 rounded bg-gray-200 dark:bg-gray-800"></div>
-                        <div className="h-3 w-1/2 rounded bg-gray-200 dark:bg-gray-800"></div>
-                        <div className="h-8 w-32 rounded bg-black dark:bg-white"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Floating Email Input */}
-                <div className="absolute -right-4 -top-4 rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-800 dark:bg-black">
-                  <div className="flex items-center space-x-2">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-500 dark:text-gray-400">Your email address</span>
-                  </div>
-                </div>
-
-                {/* Get Started Button */}
-                <div className="absolute -bottom-4 -left-4">
-                  <Button className="rounded-lg bg-black px-6 py-3 font-semibold text-white shadow-lg hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200">
-                    Get Started
-                  </Button>
-                </div>
-              </div>
-
-              {/* Actual Form */}
               <Card className="overflow-hidden rounded-2xl border border-gray-200 shadow-xl dark:border-gray-800">
                 <CardHeader className="border-b border-gray-200 bg-white p-8 dark:border-gray-800 dark:bg-black">
                   <CardTitle className="text-center text-2xl font-bold text-black dark:text-white">

@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { mockReportData } from "@/lib/mockdata";
 
 import { CheckCircle, AlertTriangle, Droplets, Shield, ExternalLink } from "lucide-react";
+
+import { mockReportData } from "@/lib/mockdata";
 
 import { ModeToggle } from "@/components/mode-toggle";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -29,16 +30,15 @@ interface ReportData {
 }
 
 export default function Report() {
-     const isExceedsGuideline = (yourLevel: number, guideline: number) => {
+  const isExceedsGuideline = (yourLevel: number, guideline: number) => {
     return yourLevel > guideline;
   };
 
-
-      const [reportData, setReportData] = useState<ReportData | null>(null);
-      // Set mock data on mount
-      React.useEffect(() => {
-        setReportData(mockReportData);
-      }, []);
+  const [reportData, setReportData] = useState<ReportData | null>(null);
+  // Set mock data on mount
+  React.useEffect(() => {
+    setReportData(mockReportData);
+  }, []);
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 px-4 py-8 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700">
