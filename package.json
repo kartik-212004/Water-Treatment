@@ -8,10 +8,10 @@
     "lint": "next lint",
     "start": "next start",
     "prepare": "husky",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-      "lint-staged": {
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+  },
+    "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"
-  }
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
