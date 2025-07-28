@@ -1,7 +1,46 @@
-export default function Report()
-{
-    return (
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { mockReportData } from "@/lib/mockdata";
+
+import { CheckCircle, AlertTriangle, Droplets, Shield, ExternalLink } from "lucide-react";
+
+import { ModeToggle } from "@/components/mode-toggle";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+
+interface ContaminantData {
+  name: string;
+  healthRisk: string;
+  yourWater: number;
+  healthGuideline: number;
+  legalLimit: number;
+  removalRate: string;
+  unit: string;
+}
+
+interface ReportData {
+  zipCode: string;
+  contaminantsFound: number;
+  contaminants: ContaminantData[];
+}
+
+export default function Report() {
+     const isExceedsGuideline = (yourLevel: number, guideline: number) => {
+    return yourLevel > guideline;
+  };
+
+
+      const [reportData, setReportData] = useState<ReportData | null>(null);
+      // Set mock data on mount
+      React.useEffect(() => {
+        setReportData(mockReportData);
+      }, []);
+  return (
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 px-4 py-8 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700">
         <div className="absolute right-4 top-4">
           <ModeToggle />
@@ -338,5 +377,5 @@ export default function Report()
         </div>
       </div>
     </ThemeProvider>
-    )
+  );
 }
