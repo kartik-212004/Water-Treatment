@@ -28,3 +28,12 @@ export interface WaterSystem {
   email_addr?: string;
   phone_number?: string;
 }
+
+export const formSubmissionSchema = z.object({
+  email: emailSchema.shape.email,
+  phoneNumber: phoneSchema.or(z.literal("").optional()).optional(),
+  zip: zipCodeSchema.shape.zipCode.transform((v) => v),
+  pwsid: z.string().trim().optional(),
+});
+
+export type FormSubmission = z.infer<typeof formSubmissionSchema>;

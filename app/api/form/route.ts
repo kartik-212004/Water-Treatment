@@ -2,24 +2,24 @@ import { NextResponse, NextRequest } from "next/server";
 
 import { ApiKeySession, ProfileCreateQuery, ProfileEnum, ProfilesApi } from "klaviyo-api";
 
+import prisma from "@/lib/prisma";
+
+import { formSubmissionSchema, FormSubmission } from "@/zodSchema/form";
+
 const session = new ApiKeySession(process.env.KLAVIYO_API_KEY || "");
 const profilesApi = new ProfilesApi(session);
 
-// Phone number validation and formatting
-function formatPhoneNumber(phone: string): string | null {
+function formatPhoneNumber(phone: string | undefined | null): string | null {
   if (!phone) return null;
 
-  // Remove all non-digit characters
   const cleaned = phone.replace(/\D/g, "");
 
-  // Handle US phone numbers
   if (cleaned.length === 10) {
     return `+1${cleaned}`;
   } else if (cleaned.length === 11 && cleaned.startsWith("1")) {
     return `+${cleaned}`;
   }
 
-  // If it already starts with +, assume it's formatted correctly
   if (phone.startsWith("+")) {
     return phone;
   }
@@ -29,32 +29,20 @@ function formatPhoneNumber(phone: string): string | null {
 
 export async function POST(req: NextRequest) {
   try {
-    // Add API key validation
     if (!process.env.KLAVIYO_API_KEY) {
       console.error("KLAVIYO_API_KEY environment variable is not set");
       return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
     }
 
-    const { email, phoneNumber, zip, pwsid } = await req.json();
+    // Parse & validate request body
+    const json = await req.json();
+    const { email, phoneNumber, zip, pwsid } = formSubmissionSchema.parse(json) as FormSubmission;
 
-    // Enhanced validation
-    if (!email || !zip) {
-      return NextResponse.json({ error: "Email and Zip Code are required" }, { status: 400 });
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
-    }
-
-    // Build profile object carefully
-    const profileAttributes: any = {
+    const profileAttributes: Record<string, any> = {
       email,
       location: { zip },
     };
 
-    // Only add phone number if it's valid
     if (phoneNumber) {
       const formattedPhone = formatPhoneNumber(phoneNumber);
       if (formattedPhone) {
@@ -64,7 +52,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Only add properties if pwsid exists
     if (pwsid) {
       profileAttributes.properties = { pwsid };
     }
@@ -80,21 +67,32 @@ export async function POST(req: NextRequest) {
 
     try {
       const response = await profilesApi.createProfile(profile);
+      const created = response.body?.data;
 
-      // Extract only the serializable data from the response
-      const profileData = {
-        id: response.body?.data?.id,
-        type: response.body?.data?.type,
-        attributes: response.body?.data?.attributes,
-      };
+      let phoneBigInt: bigint | undefined;
+      if (phoneNumber) {
+        const digits = phoneNumber.replace(/\D/g, "");
+        if (digits) phoneBigInt = BigInt(digits);
+      }
+
+      await prisma.leads.upsert({
+        where: { email },
+        update: { pwsid: pwsid || undefined, phone_number: phoneBigInt, zip_code: zip },
+        create: { email, pwsid: pwsid || undefined, phone_number: phoneBigInt, zip_code: zip },
+      });
 
       return NextResponse.json({
         success: true,
-        profile: profileData,
+        profile: created
+          ? {
+              id: created.id,
+              type: created.type,
+              attributes: created.attributes,
+            }
+          : null,
         message: "Profile created successfully",
       });
     } catch (profileError: any) {
-      // Handle duplicate profile error specifically
       if (
         profileError.response?.status === 409 &&
         profileError.response?.data?.errors?.[0]?.code === "duplicate_profile"
@@ -103,7 +101,6 @@ export async function POST(req: NextRequest) {
 
         console.log("Profile already exists, attempting to update:", duplicateProfileId);
 
-        // Try to update the existing profile instead
         try {
           const updateResponse = await profilesApi.updateProfile(duplicateProfileId, {
             data: {
@@ -127,7 +124,6 @@ export async function POST(req: NextRequest) {
         } catch (updateError: any) {
           console.error("Error updating profile:", updateError);
 
-          // Even if update fails, we can still return success since the profile exists
           return NextResponse.json({
             success: true,
             profileId: duplicateProfileId,
@@ -136,13 +132,11 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // Re-throw other errors to be handled by the main catch block
       throw profileError;
     }
   } catch (error: any) {
     console.error("Error creating Klaviyo profile:", error);
 
-    // Enhanced error logging
     if (error.response) {
       console.error("Response status:", error.response.status);
       console.error("Response data:", JSON.stringify(error.response.data, null, 2));
@@ -158,7 +152,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Return more specific error information
     const errorMessage = error.response?.data?.errors?.[0]?.detail || error.message || "Unknown error";
 
     return NextResponse.json(
