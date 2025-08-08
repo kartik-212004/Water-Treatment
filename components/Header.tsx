@@ -1,13 +1,11 @@
+import Image from "next/image";
 import React from "react";
-
-import { Droplets } from "lucide-react";
 
 export default function Header() {
   return (
     <div className="mb-16 text-center">
       <div className="mb-8 flex items-center justify-center">
-        <Droplets className="mr-3 h-8 w-8 text-black dark:text-white" />
-        <span className="text-2xl font-bold text-black dark:text-white">4Patriots</span>
+        <Image src="/logo.webp" width={300} height={100} alt="Logo" />
       </div>
 
       <div className="mb-6">
