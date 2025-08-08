@@ -4,7 +4,7 @@ import type React from "react";
 import { useState } from "react";
 
 import axios from "axios";
-import { CheckCircle, Droplets, Shield, Phone, Mail, MapPin } from "lucide-react";
+import { CheckCircle, Droplets, Mail, MapPin, Phone, Shield } from "lucide-react";
 import z from "zod";
 
 import Header from "@/components/Header";
@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { WaterSystem, zipCodeSchema, phoneSchema, emailSchema } from "@/zodSchema/form";
+import { WaterSystem, emailSchema, phoneSchema, zipCodeSchema } from "@/zodSchema/form";
 
 export default function WaterQualityReport() {
   const [formData, setFormData] = useState({
