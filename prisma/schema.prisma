@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model leads {
+  id           String   @id @default(uuid())
+  created_at   DateTime @default(now())
+  email        String   @unique
+  phone_number BigInt?
+  zip_code     String
+  pwsid        String?
+}
+
+model contaminant_mapping {
+  id                      String @id @default(uuid())
+  patriot_name            String
+  wqp_characteristic_name String
+  removal_percentage      String
+  health_risk_blurb       String
+  health_guideline_ppb    Float
+  legal_limit_ppb         Float
+}
