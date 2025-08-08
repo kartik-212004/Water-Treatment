@@ -65,21 +65,24 @@ export async function POST(req: NextRequest) {
 
     console.log("Creating profile with data:", JSON.stringify(profile, null, 2));
 
-    try {
-      const response = await profilesApi.createProfile(profile);
-      const created = response.body?.data;
-
+    const upsertLead = async () => {
       let phoneBigInt: bigint | undefined;
       if (phoneNumber) {
         const digits = phoneNumber.replace(/\D/g, "");
         if (digits) phoneBigInt = BigInt(digits);
       }
-
       await prisma.leads.upsert({
         where: { email },
         update: { pwsid: pwsid || undefined, phone_number: phoneBigInt, zip_code: zip },
         create: { email, pwsid: pwsid || undefined, phone_number: phoneBigInt, zip_code: zip },
       });
+    };
+
+    try {
+      const response = await profilesApi.createProfile(profile);
+      const created = response.body?.data;
+
+      await upsertLead();
 
       return NextResponse.json({
         success: true,
@@ -116,6 +119,8 @@ export async function POST(req: NextRequest) {
             attributes: updateResponse.body?.data?.attributes,
           };
 
+          await upsertLead();
+
           return NextResponse.json({
             success: true,
             profile: updatedProfileData,
@@ -123,6 +128,8 @@ export async function POST(req: NextRequest) {
           });
         } catch (updateError: any) {
           console.error("Error updating profile:", updateError);
+          // Still upsert locally so new details are captured
+          await upsertLead();
 
           return NextResponse.json({
             success: true,
