@@ -128,7 +128,6 @@ export async function POST(req: NextRequest) {
           });
         } catch (updateError: any) {
           console.error("Error updating profile:", updateError);
-          // Still upsert locally so new details are captured
           await upsertLead();
 
           return NextResponse.json({
