@@ -107,13 +107,11 @@ export default function WaterQualityReport() {
           duration: 5000,
         });
       } else if (err.response?.data?.error) {
-        // Handle other API errors
         toast.error("Submission failed", {
           description: err.response.data.error,
           duration: 4000,
         });
       } else {
-        // Handle network or unknown errors
         toast.error("Something went wrong", {
           description: "Please check your connection and try again.",
           duration: 4000,
