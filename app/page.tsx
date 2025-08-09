@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import axios from "axios";
 import { CheckCircle, Droplets, Mail, MapPin, Phone, Shield } from "lucide-react";
+import { toast } from "sonner";
 import z from "zod";
 
 import Header from "@/components/Header";
@@ -91,11 +92,33 @@ export default function WaterQualityReport() {
         zip: formData.zipCode,
         pwsid: pwsidToUse || undefined,
       });
-      // Optional: reset or show success state
-      // setFormData({ zipCode: "", email: "", phone: "", consent: false });
-      // setWaterSystems([]); setSelectedPwsid("");
-    } catch (err) {
+
+      toast.success("Form submitted successfully!", {
+        description: "You'll receive your water quality report soon.",
+        duration: 4000,
+      });
+    } catch (err: any) {
       console.error("Submit failed", err);
+
+      if (err.response?.status === 429) {
+        const retryAfter = err.response.data?.retryAfter || 60;
+        toast.error(`Too many submissions! Please wait ${retryAfter} seconds before trying again.`, {
+          description: "You've submitted too many forms recently.",
+          duration: 5000,
+        });
+      } else if (err.response?.data?.error) {
+        // Handle other API errors
+        toast.error("Submission failed", {
+          description: err.response.data.error,
+          duration: 4000,
+        });
+      } else {
+        // Handle network or unknown errors
+        toast.error("Something went wrong", {
+          description: "Please check your connection and try again.",
+          duration: 4000,
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

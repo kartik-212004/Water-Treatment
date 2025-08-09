@@ -25,3 +25,12 @@ model contaminant_mapping {
   health_guideline_ppb    Float
   legal_limit_ppb         Float
 }
+
+model RateLimit {
+  id          String @id @default(uuid())
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("rateLimit")
+}
