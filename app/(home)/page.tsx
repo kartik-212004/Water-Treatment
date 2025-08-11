@@ -181,11 +181,7 @@ export default function WaterQualityReport() {
 
   return (
     <div className="relative min-h-screen bg-white px-4 py-12 dark:bg-black">
-      <div className="absolute right-4 top-4"></div>
-
       <div className="mx-auto max-w-4xl">
-        <Header />
-
         <div className="mx-auto max-w-2xl">
           <Card className="overflow-hidden rounded-2xl border border-gray-200 shadow-xl dark:border-gray-800">
             <CardHeader className="border-b border-gray-200 bg-white p-8 dark:border-gray-800 dark:bg-black">

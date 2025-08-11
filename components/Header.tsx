@@ -3,8 +3,8 @@ import React from "react";
 
 export default function Header() {
   return (
-    <div className="mb-16 text-center">
-      <div className="mb-8 flex items-center justify-center">
+    <div className="relative mb-16 text-center">
+      <div className="sticky mb-8 flex items-center justify-center">
         <Image src="/logo.webp" width={300} height={100} alt="Logo" />
       </div>
 
