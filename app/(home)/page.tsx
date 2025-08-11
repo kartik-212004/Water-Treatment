@@ -102,9 +102,9 @@ export default function WaterQualityReport() {
         duration: 2000,
       });
 
-      // Wait a moment for the toast, then redirect to report page with pwsid
+      // Wait a moment for the toast, then redirect to report page with pwsid and zipcode
       setTimeout(() => {
-        router.push(`/report?pwsid=${pwsidToUse}`);
+        router.push(`/report?pwsid=${pwsidToUse}&zipcode=${formData.zipCode}`);
       }, 1000);
     } catch (err: any) {
       console.error("Submit failed", err);
