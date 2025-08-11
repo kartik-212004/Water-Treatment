@@ -1,10 +1,20 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
-import { AlertTriangle, CheckCircle, Droplets, ExternalLink, Shield } from "lucide-react";
-
-import { mockReportData } from "@/lib/mockdata";
+import axios from "axios";
+import {
+  ArrowLeft,
+  Droplets,
+  AlertTriangle,
+  CheckCircle,
+  TrendingUp,
+  Info,
+  ExternalLink,
+  Shield,
+} from "lucide-react";
 
 import { ModeToggle } from "@/components/mode-toggle";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -12,33 +22,155 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ContaminantData {
   name: string;
-  healthRisk: string;
-  yourWater: number;
-  healthGuideline: number;
-  legalLimit: number;
-  removalRate: string;
+  category: string;
+  cas: string;
   unit: string;
+  type: string;
+  sub_type: string;
+  median: number | null;
+  average: number | null;
+  detection_rate: string;
+  reduced_data_quality: boolean;
+  sources: string;
+  health_effects: string;
+  aesthetic_effects: string;
+  description: string;
+  body_effects: string[];
+  slr: number | null;
+  fed_mcl: number | null;
+  fed_mclg: number | null;
+  max: number | null;
 }
 
 interface ReportData {
-  zipCode: string;
-  contaminantsFound: number;
-  contaminants: ContaminantData[];
+  results: string;
+  data: ContaminantData[];
+  pws_id: string;
+  generated_at: string;
 }
 
 export default function Report() {
-  const isExceedsGuideline = (yourLevel: number, guideline: number) => {
-    return yourLevel > guideline;
-  };
+  const searchParams = useSearchParams();
+  const pwsid = searchParams.get("pwsid");
 
   const [reportData, setReportData] = useState<ReportData | null>(null);
-  // Set mock data on mount
-  React.useEffect(() => {
-    setReportData(mockReportData);
-  }, []);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (pwsid) {
+      fetchReportData(pwsid);
+    } else {
+      setError("No PWSID provided");
+      setLoading(false);
+    }
+  }, [pwsid]);
+
+  const fetchReportData = async (pwsid: string) => {
+    try {
+      setLoading(true);
+      const response = await axios.post("/api/report", {
+        pws_id: pwsid,
+      });
+      setReportData(response.data);
+    } catch (err) {
+      console.error("Error fetching report:", err);
+      setError("Failed to load water quality report");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCategoryColor = (category: string) => {
+    const colorMap: Record<string, string> = {
+      VOCs: "bg-red-100 text-red-800 border-red-200",
+      Pesticides: "bg-orange-100 text-orange-800 border-orange-200",
+      Properties: "bg-blue-100 text-blue-800 border-blue-200",
+      Metals: "bg-purple-100 text-purple-800 border-purple-200",
+      Microorganisms: "bg-green-100 text-green-800 border-green-200",
+      Other: "bg-gray-100 text-gray-800 border-gray-200",
+    };
+    return colorMap[category] || colorMap["Other"];
+  };
+
+  const getRiskLevel = (contaminant: ContaminantData) => {
+    if (contaminant.body_effects && contaminant.body_effects.length > 0) {
+      if (contaminant.body_effects.includes("cancer")) return { level: "High", color: "text-red-600" };
+      if (contaminant.body_effects.length > 2) return { level: "Medium", color: "text-orange-600" };
+      return { level: "Low", color: "text-yellow-600" };
+    }
+    return { level: "Minimal", color: "text-green-600" };
+  };
+
+  if (loading) {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 px-4 py-12 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700">
+          <div className="absolute right-4 top-4">
+            <ModeToggle />
+          </div>
+          <div className="mx-auto max-w-6xl space-y-8">
+            <div className="space-y-4 text-center">
+              <Skeleton className="mx-auto h-12 w-3/4" />
+              <Skeleton className="mx-auto h-6 w-1/2" />
+            </div>
+            <div className="grid gap-6">
+              {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="h-48 w-full" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </ThemeProvider>
+    );
+  }
+
+  if (error || !reportData) {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 px-4 py-12 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700">
+          <div className="absolute right-4 top-4">
+            <ModeToggle />
+          </div>
+          <div className="mx-auto max-w-4xl space-y-6 text-center">
+            <div className="space-y-4">
+              <AlertTriangle className="mx-auto h-16 w-16 text-red-500" />
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Report Not Available</h1>
+              <p className="text-lg text-gray-600 dark:text-gray-300">{error}</p>
+            </div>
+            <Link href="/">
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Form
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </ThemeProvider>
+    );
+  }
+
+  const detectedContaminants = reportData.data.filter(
+    (item) => item.detection_rate && item.detection_rate !== "0%" && item.detection_rate !== "0.00%"
+  );
+
+  const highRiskContaminants = reportData.data.filter(
+    (item) => item.body_effects && item.body_effects.length > 0
+  );
+
+  const categorizedData = reportData.data.reduce(
+    (acc, item) => {
+      if (!acc[item.category]) acc[item.category] = [];
+      acc[item.category].push(item);
+      return acc;
+    },
+    {} as Record<string, ContaminantData[]>
+  );
+
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 px-4 py-8 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700">
@@ -59,7 +191,7 @@ export default function Report() {
                   <span className="font-medium text-white/90">4Patriots</span>
                 </div>
                 <Badge className="border-white/30 bg-white/20 text-white backdrop-blur-sm">
-                  {new Date().toLocaleDateString("en-US", {
+                  {new Date(reportData.generated_at).toLocaleDateString("en-US", {
                     month: "long",
                     year: "numeric",
                   })}
@@ -69,8 +201,19 @@ export default function Report() {
               <div className="mb-4">
                 <h1 className="mb-2 text-4xl font-bold text-white md:text-5xl">Water Quality Report</h1>
                 <p className="text-lg text-blue-100">
-                  Analysis for {reportData?.zipCode} • {reportData?.contaminantsFound} contaminants detected
+                  Analysis for PWSID {reportData.pws_id} • {detectedContaminants.length} contaminants detected
                 </p>
+              </div>
+
+              <div className="mb-4">
+                <Link href="/">
+                  <Button
+                    variant="outline"
+                    className="border-white/30 bg-white/10 text-white hover:bg-white/20">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Form
+                  </Button>
+                </Link>
               </div>
 
               {/* Floating decorative elements */}
@@ -86,10 +229,10 @@ export default function Report() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="mb-1 text-sm text-muted-foreground">Total Contaminants</p>
-                  <p className="text-3xl font-bold text-foreground">{reportData?.contaminantsFound}</p>
+                  <p className="text-3xl font-bold text-foreground">{reportData.data.length}</p>
                 </div>
-                <div className="rounded-full bg-red-100 p-3 dark:bg-red-900/30">
-                  <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900/30">
+                  <Info className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
             </Card>
@@ -97,11 +240,11 @@ export default function Report() {
             <Card className="rounded-2xl border-0 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="mb-1 text-sm text-muted-foreground">Above Guidelines</p>
-                  <p className="text-3xl font-bold text-foreground">{reportData?.contaminantsFound}</p>
+                  <p className="mb-1 text-sm text-muted-foreground">Detected</p>
+                  <p className="text-3xl font-bold text-orange-600">{detectedContaminants.length}</p>
                 </div>
                 <div className="rounded-full bg-orange-100 p-3 dark:bg-orange-900/30">
-                  <Shield className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                  <AlertTriangle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
             </Card>
@@ -109,19 +252,94 @@ export default function Report() {
             <Card className="rounded-2xl border-0 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="mb-1 text-sm text-muted-foreground">Filter Efficiency</p>
-                  <p className="text-3xl font-bold text-green-600 dark:text-green-400">99.9%</p>
+                  <p className="mb-1 text-sm text-muted-foreground">Health Concerns</p>
+                  <p className="text-3xl font-bold text-red-600">{highRiskContaminants.length}</p>
                 </div>
-                <div className="rounded-full bg-green-100 p-3 dark:bg-green-900/30">
-                  <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <div className="rounded-full bg-red-100 p-3 dark:bg-red-900/30">
+                  <TrendingUp className="h-6 w-6 text-red-600 dark:text-red-400" />
                 </div>
               </div>
             </Card>
           </div>
 
+          {/* Detected Contaminants Section */}
+          {detectedContaminants.length > 0 && (
+            <Card className="mb-8 rounded-2xl border-0 bg-white/80 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
+              <CardHeader className="rounded-t-2xl bg-orange-50 dark:bg-orange-900/20">
+                <CardTitle className="flex items-center text-xl text-orange-800 dark:text-orange-200">
+                  <AlertTriangle className="mr-2 h-6 w-6" />
+                  Detected Contaminants
+                </CardTitle>
+                <CardDescription className="text-orange-700 dark:text-orange-300">
+                  These contaminants were found above detection limits in your water supply
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid gap-4">
+                  {detectedContaminants.slice(0, 6).map((contaminant, index) => {
+                    const risk = getRiskLevel(contaminant);
+                    return (
+                      <div key={index} className="rounded-lg border bg-white p-4 dark:bg-gray-700/50">
+                        <div className="mb-3 flex items-start justify-between">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                              {contaminant.name}
+                            </h3>
+                            <div className="mt-1 flex items-center space-x-2">
+                              <Badge className={getCategoryColor(contaminant.category)}>
+                                {contaminant.category}
+                              </Badge>
+                              <span className={`text-sm font-medium ${risk.color}`}>{risk.level} Risk</span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                              {contaminant.detection_rate}
+                            </div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">Detection Rate</div>
+                          </div>
+                        </div>
+
+                        {contaminant.median && (
+                          <div className="mb-3 rounded bg-gray-50 p-3 dark:bg-gray-600/50">
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="font-medium">Median:</span> {contaminant.median}{" "}
+                                {contaminant.unit}
+                              </div>
+                              {contaminant.average && (
+                                <div>
+                                  <span className="font-medium">Average:</span> {contaminant.average}{" "}
+                                  {contaminant.unit}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="space-y-3 text-sm">
+                          <div>
+                            <h4 className="mb-1 font-medium text-gray-900 dark:text-white">
+                              Health Effects:
+                            </h4>
+                            <p className="text-gray-700 dark:text-gray-300">{contaminant.health_effects}</p>
+                          </div>
+                          <div>
+                            <h4 className="mb-1 font-medium text-gray-900 dark:text-white">Sources:</h4>
+                            <p className="text-gray-700 dark:text-gray-300">{contaminant.sources}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {/* Contaminants List */}
+            {/* Categories Overview */}
             <div className="lg:col-span-2">
               <Card className="overflow-hidden rounded-2xl border-0 bg-white/80 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
                 <CardHeader className="pb-4">
@@ -129,57 +347,62 @@ export default function Report() {
                     <div className="mr-3 rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30">
                       <Droplets className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     </div>
-                    Detected Contaminants
+                    Contaminant Categories
                   </CardTitle>
                   <CardDescription>
-                    Contaminants found in your water supply that exceed health guidelines
+                    Breakdown of contaminants by category found in your water supply
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="space-y-1">
-                    {reportData?.contaminants.slice(0, 4).map((contaminant, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-4 transition-colors hover:bg-muted/30">
-                        <div className="flex items-center space-x-4">
+                    {Object.entries(categorizedData)
+                      .slice(0, 6)
+                      .map(([category, contaminants], index) => {
+                        const detectedInCategory = contaminants.filter(
+                          (c) => c.detection_rate && c.detection_rate !== "0%" && c.detection_rate !== "0.00%"
+                        );
+
+                        return (
                           <div
-                            className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white ${
-                              index === 0
-                                ? "bg-red-500"
-                                : index === 1
-                                  ? "bg-orange-500"
-                                  : index === 2
-                                    ? "bg-yellow-500"
-                                    : "bg-blue-500"
-                            }`}>
-                            {contaminant.name.charAt(0)}
+                            key={index}
+                            className="flex items-center justify-between p-4 transition-colors hover:bg-muted/30">
+                            <div className="flex items-center space-x-4">
+                              <div
+                                className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white ${
+                                  index === 0
+                                    ? "bg-red-500"
+                                    : index === 1
+                                      ? "bg-orange-500"
+                                      : index === 2
+                                        ? "bg-yellow-500"
+                                        : index === 3
+                                          ? "bg-blue-500"
+                                          : index === 4
+                                            ? "bg-purple-500"
+                                            : "bg-green-500"
+                                }`}>
+                                {category.charAt(0)}
+                              </div>
+                              <div>
+                                <p className="font-semibold text-foreground">{category}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {contaminants.length} total contaminants
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="flex items-center space-x-2">
+                                <Badge variant={detectedInCategory.length > 0 ? "destructive" : "secondary"}>
+                                  {detectedInCategory.length} Detected
+                                </Badge>
+                                <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                                  99.9% Removal
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-semibold text-foreground">{contaminant.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {contaminant.yourWater} {contaminant.unit} detected
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex items-center space-x-2">
-                            <Badge
-                              variant={
-                                isExceedsGuideline(contaminant.yourWater, contaminant.healthGuideline)
-                                  ? "destructive"
-                                  : "secondary"
-                              }>
-                              {isExceedsGuideline(contaminant.yourWater, contaminant.healthGuideline)
-                                ? "High"
-                                : "Normal"}
-                            </Badge>
-                            <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                              {contaminant.removalRate}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                        );
+                      })}
                   </div>
                 </CardContent>
               </Card>
@@ -208,18 +431,24 @@ export default function Report() {
                         stroke="currentColor"
                         strokeWidth="8"
                         fill="transparent"
-                        strokeDasharray={`${(reportData?.contaminantsFound || 0) * 15} 251.2`}
+                        strokeDasharray={`${(detectedContaminants.length || 0) * 10} 251.2`}
                         className="text-red-500"
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <span className="text-2xl font-bold text-foreground">
-                        {reportData?.contaminantsFound}
+                        {detectedContaminants.length}
                       </span>
                     </div>
                   </div>
-                  <p className="mb-1 text-sm text-muted-foreground">Risk Level</p>
-                  <p className="text-lg font-semibold text-red-600 dark:text-red-400">High Risk</p>
+                  <p className="mb-1 text-sm text-muted-foreground">Detected</p>
+                  <p className="text-lg font-semibold text-red-600 dark:text-red-400">
+                    {detectedContaminants.length > 5
+                      ? "High Risk"
+                      : detectedContaminants.length > 2
+                        ? "Medium Risk"
+                        : "Low Risk"}
+                  </p>
                 </div>
               </Card>
 
@@ -236,15 +465,15 @@ export default function Report() {
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Arsenic Removal</span>
+                    <span className="text-sm text-muted-foreground">VOCs Removal</span>
                     <span className="font-semibold text-green-600 dark:text-green-400">99.9%</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Lead Removal</span>
+                    <span className="text-sm text-muted-foreground">Heavy Metals</span>
                     <span className="font-semibold text-green-600 dark:text-green-400">99.5%</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">PFAS Removal</span>
+                    <span className="text-sm text-muted-foreground">Pesticides</span>
                     <span className="font-semibold text-green-600 dark:text-green-400">99.7%</span>
                   </div>
                 </div>
@@ -265,104 +494,6 @@ export default function Report() {
               </Card>
             </div>
           </div>
-
-          {/* Detailed Analysis Table */}
-          <Card className="mt-8 overflow-hidden rounded-2xl border-0 bg-white/80 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-foreground">Detailed Analysis</CardTitle>
-              <CardDescription>
-                Complete breakdown of all contaminants detected in your water supply
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-muted/30">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                        Contaminant
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                        Your Level
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                        Health Guideline
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                        Filter Removal
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {reportData?.contaminants.map((contaminant, index) => (
-                      <tr key={index} className="transition-colors hover:bg-muted/20">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center space-x-3">
-                            <div
-                              className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white ${
-                                index === 0
-                                  ? "bg-red-500"
-                                  : index === 1
-                                    ? "bg-orange-500"
-                                    : index === 2
-                                      ? "bg-yellow-500"
-                                      : index === 3
-                                        ? "bg-blue-500"
-                                        : index === 4
-                                          ? "bg-purple-500"
-                                          : "bg-gray-500"
-                              }`}>
-                              {contaminant.name.charAt(0)}
-                            </div>
-                            <div>
-                              <p className="font-medium text-foreground">{contaminant.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {contaminant.healthRisk.slice(0, 50)}
-                                ...
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`font-semibold ${
-                              isExceedsGuideline(contaminant.yourWater, contaminant.healthGuideline)
-                                ? "text-red-600 dark:text-red-400"
-                                : "text-green-600 dark:text-green-400"
-                            }`}>
-                            {contaminant.yourWater} {contaminant.unit}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-muted-foreground">
-                            {contaminant.healthGuideline} {contaminant.unit}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="font-semibold text-green-600 dark:text-green-400">
-                            {contaminant.removalRate}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <Badge
-                            variant={
-                              isExceedsGuideline(contaminant.yourWater, contaminant.healthGuideline)
-                                ? "destructive"
-                                : "secondary"
-                            }>
-                            {isExceedsGuideline(contaminant.yourWater, contaminant.healthGuideline)
-                              ? "Exceeds Guideline"
-                              : "Within Limits"}
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
 
           <Separator className="my-8" />
 
