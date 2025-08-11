@@ -180,7 +180,7 @@ export default function WaterQualityReport() {
     (waterSystems.length > 1 && !selectedPwsid);
 
   return (
-    <div className="relative min-h-screen bg-white px-4 py-12 dark:bg-black">
+    <div className="relative bg-white px-4 pb-12 dark:bg-black">
       <div className="mx-auto max-w-4xl">
         <div className="mx-auto max-w-2xl">
           <Card className="overflow-hidden rounded-2xl border border-gray-200 shadow-xl dark:border-gray-800">
