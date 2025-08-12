@@ -4,34 +4,11 @@ import axios from "axios";
 import fs from "fs";
 import path from "path";
 
+import { PATRIOTS_CONTAMINANTS } from "@/lib/constants";
+
 interface RequestBody {
   pws_id: string;
 }
-
-const PATRIOTS_CONTAMINANTS = {
-  Lead: {
-    removalRate: "99.9%",
-    healthRisk:
-      "A neurotoxin that can cause serious health problems, particularly in pregnant women and young children.",
-  },
-  Arsenic: {
-    removalRate: "99.9%",
-    healthRisk: "A known carcinogen linked to an increased risk of skin, bladder, and lung cancer.",
-  },
-  Atrazine: {
-    removalRate: "99.9%",
-    healthRisk:
-      "An endocrine-disrupting herbicide that can interfere with hormone systems and cause reproductive harm.",
-  },
-  PFOA: {
-    removalRate: "99.9%",
-    healthRisk: "A 'forever chemical' linked to cancer, immune system effects, and developmental issues.",
-  },
-  Chloroform: {
-    removalRate: "99.9%",
-    healthRisk: "A disinfection byproduct that is a probable human carcinogen.",
-  },
-} as const;
 
 interface ContaminantData {
   name: string;
