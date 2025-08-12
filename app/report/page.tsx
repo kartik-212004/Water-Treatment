@@ -142,7 +142,8 @@ function ReportContent() {
             </h1>
             <div className="max-w-2xl text-sm font-medium text-white/70">
               Service Area: <span className="text-white">{zipCode}</span> · Priority contaminants detected:{" "}
-              {detectedPatriotsCount}{" "}
+              <span className="text-[#B40014]">{detectedPatriotsCount}</span>
+              {"  "}
               <Badge className="rounded-md bg-white/10 text-white ring-1 ring-inset ring-white/20">
                 {new Date(reportData.generated_at).toLocaleDateString("en-US", {
                   month: "short",
@@ -153,7 +154,6 @@ function ReportContent() {
           </div>
         </div>
 
-        {/* Summary Statement */}
         <Card className="mb-10 rounded-sm border border-gray-200 bg-gray-100 shadow-sm">
           <CardContent className="p-8 text-center">
             <h2 className="mb-3 text-xl font-semibold tracking-tight text-gray-900">
@@ -173,7 +173,6 @@ function ReportContent() {
           </CardContent>
         </Card>
 
-        {/* Patriots Contaminants - Three Column Layout */}
         {prioritizedContaminants.length > 0 ? (
           <div className="mb-8 space-y-6">
             {prioritizedContaminants.map((contaminant, index) => {
@@ -188,7 +187,6 @@ function ReportContent() {
                   <div
                     className={`absolute left-0 top-0 h-full ${contaminant.isDetected ? "bg-[#B40014]" : "bg-gray-300"}`}></div>
                   <CardContent className="p-5 sm:p-6">
-                    {/* Header */}
                     <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
                       <div className="flex items-center gap-2">
                         {contaminant.isDetected ? (
@@ -260,7 +258,6 @@ function ReportContent() {
                         </p>
                       </div>
                     </div>
-                    {/* Confidence / Action Inline (optional future) */}
                   </CardContent>
                 </Card>
               );
@@ -279,10 +276,8 @@ function ReportContent() {
           </Card>
         )}
 
-        {/* Call to Action */}
         <CTA />
 
-        {/* Disclaimer */}
         <Card className="rounded-none border border-gray-200 bg-gray-50 shadow-sm sm:rounded-2xl">
           <CardContent className="p-6">
             <p className="text-center text-sm text-gray-600">
