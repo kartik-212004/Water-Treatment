@@ -7,7 +7,7 @@ const CTA_LIST = [
   { title: "Targets priority contaminants identified in this report", icon: CheckCircle },
   { title: "Advanced Nanomesh™ multi‑stage reduction technology", icon: CheckCircle },
   { title: "Independent lab verified performance", icon: CheckCircle },
-];
+] as const;
 
 export default function CTA() {
   return (
@@ -18,8 +18,8 @@ export default function CTA() {
             <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">Protect Your Drinking Water</h2>
             <ul className="space-y-2 text-sm text-white/80">
               {CTA_LIST.map((e, i) => (
-                <li className="flex items-start gap-2">
-                  <e.icon className="mt-0.5 h-4 w-4 text-[#FFC400]" />
+                <li key={i} className="flex items-start gap-2">
+                  <e.icon className="mt-0.5 h-4 w-4 text-yellow-300" />
                   <span className="text-left">{e.title}</span>
                 </li>
               ))}
@@ -28,7 +28,7 @@ export default function CTA() {
           <div className="flex flex-col items-center gap-4 md:items-end">
             <Button
               size="lg"
-              className="bg-[#FFC400] px-10 py-5 text-base font-semibold text-[#101935] shadow hover:bg-[#e6b100]"
+              className="bg-yellow-400 px-10 py-5 text-base font-semibold text-[#101935] shadow hover:bg-yellow-400/90"
               onClick={() =>
                 window.open(
                   "https://4patriots.com/product/patriot-pure-ultimate-water-filtration-system-nanomesh-filter",

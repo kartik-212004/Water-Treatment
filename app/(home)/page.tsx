@@ -209,7 +209,7 @@ export default function WaterQualityReport() {
       <div className="mx-auto max-w-4xl px-4">
         <div className="mx-auto max-w-2xl">
           <Card className="overflow-hidden rounded-sm border-none border-gray-200 shadow-none sm:border sm:shadow-xl">
-            <CardContent className="bg-white p-8">
+            <CardContent className="bg-white px-0 py-8 sm:p-8">
               <form onSubmit={handleSubmit} className="space-y-8">
                 <div className="space-y-6">
                   <div className="space-y-3">
@@ -242,7 +242,6 @@ export default function WaterQualityReport() {
                       </div>
                     )}
 
-                    {/* Always show select (disabled until data) */}
                     <div className="space-y-3">
                       <Label
                         htmlFor="waterSystem"
