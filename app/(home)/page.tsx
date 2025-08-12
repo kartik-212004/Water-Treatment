@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
 
@@ -19,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { WaterSystem, emailSchema, phoneSchema, zipCodeSchema } from "@/zodSchema/form";
 
 export default function WaterQualityReport() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     zipCode: "",
     email: "",
@@ -86,6 +88,8 @@ export default function WaterQualityReport() {
     setIsSubmitting(true);
     try {
       const pwsidToUse = waterSystems.length === 1 ? waterSystems[0].pwsid : selectedPwsid;
+
+      // Submit form data
       await axios.post("/api/form", {
         email: formData.email,
         phoneNumber: formData.phone || undefined,
@@ -94,9 +98,14 @@ export default function WaterQualityReport() {
       });
 
       toast.success("Form submitted successfully!", {
-        description: "You'll receive your water quality report soon.",
-        duration: 4000,
+        description: "Generating your water quality report...",
+        duration: 2000,
       });
+
+      // Wait a moment for the toast, then redirect to report page with pwsid and zipcode
+      setTimeout(() => {
+        router.push(`/report?pwsid=${pwsidToUse}&zipcode=${formData.zipCode}`);
+      }, 1000);
     } catch (err: any) {
       console.error("Submit failed", err);
 

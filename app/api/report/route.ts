@@ -1,23 +1,40 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-import axios from "axios";
+import fs from "fs";
+import path from "path";
 
 interface RequestBody {
   pws_id: string;
 }
 
 export async function POST(req: NextRequest) {
-  const { pws_id }: RequestBody = await req.json();
-
   try {
-    const response = await axios.get(
-      `https://api.gosimplelab.com/api/utilities/results?pws_id=${pws_id}&result_type=mixed`
-    );
+    const { pws_id }: RequestBody = await req.json();
 
-    const data = response.data;
-    return new Response(JSON.stringify(data), { status: 200 });
+    if (!pws_id) {
+      return NextResponse.json({ error: "PWSID is required" }, { status: 400 });
+    }
+
+    // For now, return the mock data from result.json
+    // In production, you would make the actual API call:
+    // const response = await axios.get(
+    //   `https://api.gosimplelab.com/api/utilities/results?pws_id=${pws_id}&result_type=mixed`
+    // );
+
+    const filePath = path.join(process.cwd(), "result.json");
+    const fileContents = fs.readFileSync(filePath, "utf8");
+    const reportData = JSON.parse(fileContents);
+
+    // Add the pwsid to the response for reference
+    const response = {
+      ...reportData,
+      pws_id: pws_id,
+      generated_at: new Date().toISOString(),
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
-    console.error(error);
-    return new Response("Error fetching data", { status: 500 });
+    console.error("Error fetching report data:", error);
+    return NextResponse.json({ error: "Failed to fetch report data" }, { status: 500 });
   }
 }

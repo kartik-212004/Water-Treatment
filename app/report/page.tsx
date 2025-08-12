@@ -1,381 +1,379 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
 
-import { AlertTriangle, CheckCircle, Droplets, ExternalLink, Shield } from "lucide-react";
+import axios from "axios";
+import { ArrowLeft, Droplets, AlertTriangle, CheckCircle, Info } from "lucide-react";
 
-import { mockReportData } from "@/lib/mockdata";
-
-import { ModeToggle } from "@/components/mode-toggle";
-import { ThemeProvider } from "@/components/theme-provider";
+import CTA from "@/components/CTA";
+import Loading from "@/components/Loading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
+
+const PATRIOTS_CONTAMINANTS = {
+  Lead: {
+    removalRate: "99.9%",
+    healthRisk:
+      "A neurotoxin that can cause serious health problems, particularly in pregnant women and young children.",
+  },
+  Arsenic: {
+    removalRate: "99.9%",
+    healthRisk: "A known carcinogen linked to an increased risk of skin, bladder, and lung cancer.",
+  },
+  Atrazine: {
+    removalRate: "99.9%",
+    healthRisk:
+      "An endocrine-disrupting herbicide that can interfere with hormone systems and cause reproductive harm.",
+  },
+  PFOA: {
+    removalRate: "99.9%",
+    healthRisk: "A 'forever chemical' linked to cancer, immune system effects, and developmental issues.",
+  },
+  Chloroform: {
+    removalRate: "99.9%",
+    healthRisk: "A disinfection byproduct that is a probable human carcinogen.",
+  },
+} as const;
 
 interface ContaminantData {
   name: string;
-  healthRisk: string;
-  yourWater: number;
-  healthGuideline: number;
-  legalLimit: number;
-  removalRate: string;
+  category: string;
+  cas: string;
   unit: string;
+  type: string;
+  sub_type: string;
+  median: number | null;
+  average: number | null;
+  detection_rate: string;
+  reduced_data_quality: boolean;
+  sources: string;
+  health_effects: string;
+  aesthetic_effects: string;
+  description: string;
+  body_effects: string[];
+  slr: number | null;
+  fed_mcl: number | null;
+  fed_mclg: number | null;
+  max: number | null;
 }
 
 interface ReportData {
-  zipCode: string;
-  contaminantsFound: number;
-  contaminants: ContaminantData[];
+  results: string;
+  data: ContaminantData[];
+  pws_id: string;
+  generated_at: string;
 }
 
-export default function Report() {
-  const isExceedsGuideline = (yourLevel: number, guideline: number) => {
-    return yourLevel > guideline;
-  };
+function ReportContent() {
+  const searchParams = useSearchParams();
+  const pwsid = searchParams.get("pwsid");
+  const zipCode = searchParams.get("zipcode") || pwsid;
 
   const [reportData, setReportData] = useState<ReportData | null>(null);
-  // Set mock data on mount
-  React.useEffect(() => {
-    setReportData(mockReportData);
-  }, []);
-  return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 px-4 py-8 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700">
-        <div className="absolute right-4 top-4">
-          <ModeToggle />
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (pwsid) {
+      fetchReportData(pwsid);
+    } else {
+      setError("No PWSID provided");
+      setLoading(false);
+    }
+  }, [pwsid]);
+
+  const fetchReportData = async (pwsid: string) => {
+    try {
+      setLoading(true);
+      const response = await axios.post("/api/report", {
+        pws_id: pwsid,
+      });
+      setReportData(response.data);
+    } catch (err) {
+      console.error("Error fetching report:", err);
+      setError("Failed to load water quality report");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCategoryColor = (category: string) => {
+    const colorMap: Record<string, string> = {
+      VOCs: "bg-red-100 text-red-800 border-red-200",
+      Pesticides: "bg-orange-100 text-orange-800 border-orange-200",
+      Properties: "bg-blue-100 text-blue-800 border-blue-200",
+      Metals: "bg-purple-100 text-purple-800 border-purple-200",
+      Microorganisms: "bg-green-100 text-green-800 border-green-200",
+      Other: "bg-gray-100 text-gray-800 border-gray-200",
+    };
+    return colorMap[category] || colorMap["Other"];
+  };
+
+  const getRiskLevel = (contaminant: ContaminantData) => {
+    if (contaminant.body_effects && contaminant.body_effects.length > 0) {
+      if (contaminant.body_effects.includes("cancer")) return { level: "High", color: "text-red-600" };
+      if (contaminant.body_effects.length > 2) return { level: "Medium", color: "text-orange-600" };
+      return { level: "Low", color: "text-yellow-600" };
+    }
+    return { level: "Minimal", color: "text-green-600" };
+  };
+
+  if (loading) {
+    return <Loading zipcode={zipCode} />;
+  }
+
+  if (error || !reportData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 px-4 py-12">
+        <div className="mx-auto max-w-4xl space-y-6 text-center">
+          <div className="space-y-4">
+            <AlertTriangle className="mx-auto h-16 w-16 text-red-500" />
+            <h1 className="text-3xl font-bold text-gray-900">Report Not Available</h1>
+            <p className="text-lg text-gray-600">{error}</p>
+          </div>
+          <Link href="/">
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Form
+            </Button>
+          </Link>
         </div>
+      </div>
+    );
+  }
 
-        <div className="mx-auto max-w-7xl">
-          {/* Modern Header Section */}
-          <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-blue-700 to-purple-700 p-8 shadow-2xl">
-            <div className="absolute inset-0 bg-[url('/water-illustration.png')] bg-contain bg-right bg-no-repeat opacity-20"></div>
-            <div className="relative z-10">
-              <div className="mb-6 flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="rounded-full bg-white/20 p-2 backdrop-blur-sm">
-                    <Droplets className="h-6 w-6 text-white" />
-                  </div>
-                  <span className="font-medium text-white/90">4Patriots</span>
-                </div>
-                <Badge className="border-white/30 bg-white/20 text-white backdrop-blur-sm">
-                  {new Date().toLocaleDateString("en-US", {
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </Badge>
-              </div>
+  const allPatriotsContaminants = reportData.data.filter((item) => {
+    return Object.keys(PATRIOTS_CONTAMINANTS).includes(item.name);
+  });
 
-              <div className="mb-4">
-                <h1 className="mb-2 text-4xl font-bold text-white md:text-5xl">Water Quality Report</h1>
-                <p className="text-lg text-blue-100">
-                  Analysis for {reportData?.zipCode} • {reportData?.contaminantsFound} contaminants detected
-                </p>
-              </div>
+  // Calculate health guideline exceedance and prioritize
+  const prioritizedContaminants = allPatriotsContaminants
+    .map((item) => {
+      const isDetected =
+        item.detection_rate && item.detection_rate !== "0%" && item.detection_rate !== "0.00%";
+      const currentLevel = item.average || item.median || 0;
+      const healthGuideline = item.fed_mclg || item.fed_mcl || Infinity;
 
-              {/* Floating decorative elements */}
-              <div className="absolute right-20 top-4 h-16 w-16 rounded-full bg-white/10 blur-sm"></div>
-              <div className="absolute right-32 top-20 h-8 w-8 rounded-full bg-cyan-300/30"></div>
-              <div className="absolute bottom-8 right-16 h-12 w-12 rounded-full bg-blue-300/20 blur-sm"></div>
+      // Calculate exceedance ratio (higher = worse)
+      const exceedanceRatio = healthGuideline > 0 ? currentLevel / healthGuideline : 0;
+
+      return {
+        ...item,
+        isDetected,
+        currentLevel,
+        healthGuideline,
+        exceedanceRatio,
+        priority: isDetected ? exceedanceRatio : 0, // Detected contaminants get priority
+      };
+    })
+    .sort((a, b) => {
+      // First sort by detection status (detected first)
+      if (a.isDetected && !b.isDetected) return -1;
+      if (!a.isDetected && b.isDetected) return 1;
+      // Then sort by exceedance ratio (highest first)
+      return b.priority - a.priority;
+    })
+    .slice(0, 7); // Show top 5-7 contaminants
+
+  const detectedPatriotsCount = prioritizedContaminants.filter((item) => item.isDetected).length;
+
+  const categorizedData = reportData.data.reduce(
+    (acc, item) => {
+      if (!acc[item.category]) acc[item.category] = [];
+      acc[item.category].push(item);
+      return acc;
+    },
+    {} as Record<string, ContaminantData[]>
+  );
+
+  return (
+    <div className="relative min-h-screen bg-white pb-12">
+      <div className="mx-auto max-w-7xl py-2">
+        <div className="relative mb-8 overflow-hidden border-b border-gray-200 bg-[#101935] px-6 py-10 shadow-sm sm:rounded-none">
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center space-x-3">
+              <Image src="/logo.webp" width={200} height={100} alt="Logo" />
+            </div>
+            <div className="flex items-center gap-3">
+              <Badge className="bg-white/10 text-white ring-1 ring-inset ring-white/20">
+                {new Date(reportData.generated_at).toLocaleDateString("en-US", {
+                  month: "short",
+                  year: "numeric",
+                })}
+              </Badge>
+              <Link href="/" className="hidden sm:inline-block">
+                <Button
+                  variant="outline"
+                  className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+              </Link>
             </div>
           </div>
-
-          {/* Stats Overview Cards */}
-          <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-            <Card className="rounded-2xl border-0 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="mb-1 text-sm text-muted-foreground">Total Contaminants</p>
-                  <p className="text-3xl font-bold text-foreground">{reportData?.contaminantsFound}</p>
-                </div>
-                <div className="rounded-full bg-red-100 p-3 dark:bg-red-900/30">
-                  <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
-                </div>
-              </div>
-            </Card>
-
-            <Card className="rounded-2xl border-0 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="mb-1 text-sm text-muted-foreground">Above Guidelines</p>
-                  <p className="text-3xl font-bold text-foreground">{reportData?.contaminantsFound}</p>
-                </div>
-                <div className="rounded-full bg-orange-100 p-3 dark:bg-orange-900/30">
-                  <Shield className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-                </div>
-              </div>
-            </Card>
-
-            <Card className="rounded-2xl border-0 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="mb-1 text-sm text-muted-foreground">Filter Efficiency</p>
-                  <p className="text-3xl font-bold text-green-600 dark:text-green-400">99.9%</p>
-                </div>
-                <div className="rounded-full bg-green-100 p-3 dark:bg-green-900/30">
-                  <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {/* Contaminants List */}
-            <div className="lg:col-span-2">
-              <Card className="overflow-hidden rounded-2xl border-0 bg-white/80 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center text-xl font-semibold text-foreground">
-                    <div className="mr-3 rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30">
-                      <Droplets className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    Detected Contaminants
-                  </CardTitle>
-                  <CardDescription>
-                    Contaminants found in your water supply that exceed health guidelines
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="space-y-1">
-                    {reportData?.contaminants.slice(0, 4).map((contaminant, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-4 transition-colors hover:bg-muted/30">
-                        <div className="flex items-center space-x-4">
-                          <div
-                            className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white ${
-                              index === 0
-                                ? "bg-red-500"
-                                : index === 1
-                                  ? "bg-orange-500"
-                                  : index === 2
-                                    ? "bg-yellow-500"
-                                    : "bg-blue-500"
-                            }`}>
-                            {contaminant.name.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-foreground">{contaminant.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {contaminant.yourWater} {contaminant.unit} detected
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex items-center space-x-2">
-                            <Badge
-                              variant={
-                                isExceedsGuideline(contaminant.yourWater, contaminant.healthGuideline)
-                                  ? "destructive"
-                                  : "secondary"
-                              }>
-                              {isExceedsGuideline(contaminant.yourWater, contaminant.healthGuideline)
-                                ? "High"
-                                : "Normal"}
-                            </Badge>
-                            <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                              {contaminant.removalRate}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Summary Cards */}
-            <div className="space-y-6">
-              {/* Risk Level Card */}
-              <Card className="rounded-2xl border-0 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
-                <div className="text-center">
-                  <div className="relative mx-auto mb-4 h-24 w-24">
-                    <svg className="h-24 w-24 -rotate-90 transform" viewBox="0 0 100 100">
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="40"
-                        stroke="currentColor"
-                        strokeWidth="8"
-                        fill="transparent"
-                        className="text-muted/20"
-                      />
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="40"
-                        stroke="currentColor"
-                        strokeWidth="8"
-                        fill="transparent"
-                        strokeDasharray={`${(reportData?.contaminantsFound || 0) * 15} 251.2`}
-                        className="text-red-500"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-2xl font-bold text-foreground">
-                        {reportData?.contaminantsFound}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="mb-1 text-sm text-muted-foreground">Risk Level</p>
-                  <p className="text-lg font-semibold text-red-600 dark:text-red-400">High Risk</p>
-                </div>
-              </Card>
-
-              {/* Filter Performance */}
-              <Card className="rounded-2xl border-0 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
-                <div className="mb-4 flex items-center space-x-3">
-                  <div className="rounded-lg bg-green-100 p-2 dark:bg-green-900/30">
-                    <Shield className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">Patriot Pure® Filter</p>
-                    <p className="text-sm text-muted-foreground">Certified Performance</p>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Arsenic Removal</span>
-                    <span className="font-semibold text-green-600 dark:text-green-400">99.9%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Lead Removal</span>
-                    <span className="font-semibold text-green-600 dark:text-green-400">99.5%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">PFAS Removal</span>
-                    <span className="font-semibold text-green-600 dark:text-green-400">99.7%</span>
-                  </div>
-                </div>
-              </Card>
-
-              {/* CTA Card */}
-              <Card className="rounded-2xl border-0 bg-gradient-to-br from-green-500 to-emerald-600 p-6 text-white shadow-lg">
-                <div className="text-center">
-                  <h3 className="mb-2 text-lg font-bold">Protect Your Family</h3>
-                  <p className="mb-4 text-sm text-green-100">Get certified filtration for your home</p>
-                  <Button
-                    className="w-full bg-white font-semibold text-green-600 hover:bg-gray-100"
-                    onClick={() => window.open("https://4patriots.com/patriot-pure-filter", "_blank")}>
-                    Order Now
-                    <ExternalLink className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              </Card>
-            </div>
-          </div>
-
-          {/* Detailed Analysis Table */}
-          <Card className="mt-8 overflow-hidden rounded-2xl border-0 bg-white/80 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-foreground">Detailed Analysis</CardTitle>
-              <CardDescription>
-                Complete breakdown of all contaminants detected in your water supply
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-muted/30">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                        Contaminant
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                        Your Level
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                        Health Guideline
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                        Filter Removal
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {reportData?.contaminants.map((contaminant, index) => (
-                      <tr key={index} className="transition-colors hover:bg-muted/20">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center space-x-3">
-                            <div
-                              className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white ${
-                                index === 0
-                                  ? "bg-red-500"
-                                  : index === 1
-                                    ? "bg-orange-500"
-                                    : index === 2
-                                      ? "bg-yellow-500"
-                                      : index === 3
-                                        ? "bg-blue-500"
-                                        : index === 4
-                                          ? "bg-purple-500"
-                                          : "bg-gray-500"
-                              }`}>
-                              {contaminant.name.charAt(0)}
-                            </div>
-                            <div>
-                              <p className="font-medium text-foreground">{contaminant.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {contaminant.healthRisk.slice(0, 50)}
-                                ...
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`font-semibold ${
-                              isExceedsGuideline(contaminant.yourWater, contaminant.healthGuideline)
-                                ? "text-red-600 dark:text-red-400"
-                                : "text-green-600 dark:text-green-400"
-                            }`}>
-                            {contaminant.yourWater} {contaminant.unit}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-muted-foreground">
-                            {contaminant.healthGuideline} {contaminant.unit}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="font-semibold text-green-600 dark:text-green-400">
-                            {contaminant.removalRate}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <Badge
-                            variant={
-                              isExceedsGuideline(contaminant.yourWater, contaminant.healthGuideline)
-                                ? "destructive"
-                                : "secondary"
-                            }>
-                            {isExceedsGuideline(contaminant.yourWater, contaminant.healthGuideline)
-                              ? "Exceeds Guideline"
-                              : "Within Limits"}
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Separator className="my-8" />
-
-          {/* Footer */}
-          <div className="text-center text-sm text-muted-foreground">
-            <p>© 2024 4Patriots LLC. All rights reserved.</p>
-            <p className="mt-2">
-              This report is based on publicly available water quality data and EPA standards. Individual
-              results may vary. Consult with a healthcare professional for specific health concerns.
+          <div className="space-y-4">
+            <h1 className="max-w-3xl text-3xl font-semibold leading-tight text-white md:text-4xl lg:text-5xl">
+              Personalized Water Quality Report
+            </h1>
+            <p className="max-w-2xl text-sm font-medium tracking-wide text-white/70">
+              Service Area: <span className="text-white">{zipCode}</span> · Priority contaminants detected:{" "}
+              {detectedPatriotsCount}
             </p>
           </div>
         </div>
+
+        {/* Summary Statement */}
+        <Card className="mb-10 rounded-sm border border-gray-200 bg-gray-100 shadow-sm">
+          <CardContent className="p-8 text-center">
+            <h2 className="mb-3 text-xl font-semibold tracking-tight text-gray-900">
+              {detectedPatriotsCount > 0 ? (
+                <>
+                  We identified <span className="text-[#B40014]">{detectedPatriotsCount}</span> priority
+                  contaminant(s) above guideline levels.
+                </>
+              ) : (
+                <>No priority contaminants exceeded guideline thresholds.</>
+              )}
+            </h2>
+            <p className="text-sm leading-relaxed text-gray-600">
+              Focused report displays only the high-impact contaminants our filtration technology targets for
+              meaningful risk reduction.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Patriots Contaminants - Three Column Layout */}
+        {prioritizedContaminants.length > 0 ? (
+          <div className="mb-8 space-y-6">
+            {prioritizedContaminants.map((contaminant, index) => {
+              const patriotData =
+                PATRIOTS_CONTAMINANTS[contaminant.name as keyof typeof PATRIOTS_CONTAMINANTS];
+              const guideline = contaminant.fed_mclg ?? null;
+              const legal = contaminant.fed_mcl ?? null;
+              return (
+                <Card
+                  key={index}
+                  className={`group overflow-hidden rounded-sm transition hover:shadow-md ${
+                    contaminant.isDetected ? "bg-white" : "bg-white"
+                  }`}>
+                  <div
+                    className={`absolute left-0 top-0 h-full w-1 ${contaminant.isDetected ? "bg-[#B40014]" : "bg-gray-300"}`}></div>
+                  <CardContent className="p-5 sm:p-6">
+                    {/* Header */}
+                    <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+                      <div className="flex items-center gap-2">
+                        {contaminant.isDetected ? (
+                          <AlertTriangle className="h-5 w-5 text-[#B40014]" />
+                        ) : (
+                          <CheckCircle className="h-5 w-5 text-gray-400" />
+                        )}
+                        <h3 className="text-lg font-semibold text-gray-900">{contaminant.name}</h3>
+                        {contaminant.exceedanceRatio > 1 && (
+                          <span className="rounded-full bg-[#B40014]/10 px-2 py-0.5 text-xs font-medium text-[#B40014]">
+                            Exceeds
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          className={`text-[10px] font-semibold tracking-wide ${contaminant.isDetected ? "bg-[#101935] text-white" : "bg-gray-200 text-gray-700"}`}>
+                          {contaminant.isDetected ? `PRIORITY ${index + 1}` : "NOT DETECTED"}
+                        </Badge>
+                        <div className="text-right">
+                          <p className="text-xs font-medium text-gray-500">Detection</p>
+                          <p className="-mt-0.5 text-sm font-semibold text-gray-900">
+                            {contaminant.detection_rate || "—"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Risk Text */}
+                    <p className="mb-5 text-sm leading-relaxed text-gray-600">{patriotData.healthRisk}</p>
+                    {/* Stats Grid */}
+                    <div className="mb-5 grid gap-3 sm:grid-cols-4">
+                      <div
+                        className={`rounded-md border p-3 ${contaminant.isDetected ? "border-[#101935]/30 bg-[#101935]/5" : "border-gray-200 bg-gray-50"}`}>
+                        <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">
+                          Your Level
+                        </p>
+                        <p
+                          className={`text-base font-semibold ${contaminant.isDetected ? "text-[#101935]" : "text-gray-500"}`}>
+                          {contaminant.isDetected
+                            ? `${contaminant.currentLevel} ${contaminant.unit}`
+                            : "Below DL"}
+                        </p>
+                      </div>
+                      <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
+                        <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">
+                          Guideline
+                        </p>
+                        <p className="text-base font-semibold text-gray-800">
+                          {guideline ? `${guideline} ${contaminant.unit}` : "—"}
+                        </p>
+                      </div>
+                      <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
+                        <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">
+                          EPA Limit
+                        </p>
+                        <p className="text-base font-semibold text-gray-800">
+                          {legal ? `${legal} ${contaminant.unit}` : "—"}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-center justify-center rounded-md border border-green-300 bg-green-50 px-2 py-3 text-center">
+                        <CheckCircle className="mb-1 h-5 w-5 text-green-600" />
+                        <p className="text-[11px] font-medium tracking-wide text-green-700">
+                          Patriot Pure® Removal:
+                        </p>
+                        <p className="text-2xl font-bold tracking-tight text-green-700">
+                          {patriotData.removalRate}
+                        </p>
+                      </div>
+                    </div>
+                    {/* Confidence / Action Inline (optional future) */}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          <Card className="mb-8 rounded-2xl border border-blue-200 bg-blue-50 shadow-sm">
+            <CardContent className="p-8 text-center">
+              <CheckCircle className="mx-auto mb-4 h-16 w-16 text-blue-600" />
+              <h2 className="mb-4 text-2xl font-semibold text-blue-800">Great News!</h2>
+              <p className="text-lg text-gray-700">
+                None of the key contaminants that the Patriot Pure® filter targets were detected above
+                recommended levels in your area.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Call to Action */}
+        <CTA />
+
+        {/* Disclaimer */}
+        <Card className="mb-8 rounded-2xl border border-gray-200 bg-gray-50 shadow-sm">
+          <CardContent className="p-6">
+            <p className="text-center text-sm text-gray-600">
+              <Info className="mr-1 inline h-4 w-4" />
+              This report highlights key contaminants found in your water that the Patriot Pure® filter is
+              certified to reduce. For a complete list of tested contaminants from your utility, please refer
+              to their annual Consumer Confidence Report (CCR).
+            </p>
+          </CardContent>
+        </Card>
       </div>
-    </ThemeProvider>
+    </div>
+  );
+}
+
+export default function Report() {
+  return (
+    <Suspense fallback={<div>Loading report...</div>}>
+      <ReportContent />
+    </Suspense>
   );
 }
