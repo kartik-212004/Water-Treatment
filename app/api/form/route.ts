@@ -127,8 +127,6 @@ export async function POST(req: NextRequest) {
       },
     };
 
-    console.log("Creating profile with data:", JSON.stringify(profile, null, 2));
-
     const upsertLead = async () => {
       let phoneBigInt: bigint | undefined;
       if (phoneNumber) {
@@ -165,8 +163,6 @@ export async function POST(req: NextRequest) {
         profileError.response?.data?.errors?.[0]?.code === "duplicate_profile"
       ) {
         const duplicateProfileId = profileError.response.data.errors[0].meta?.duplicate_profile_id;
-
-        console.log("Profile already exists, attempting to update:", duplicateProfileId);
 
         try {
           const updateResponse = await profilesApi.updateProfile(duplicateProfileId, {

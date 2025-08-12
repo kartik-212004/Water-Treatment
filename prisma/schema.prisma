@@ -26,8 +26,10 @@ model Contaminant_Mapping {
   detected_patriots_count Int
   report_data            Json     
   klaviyo_event_sent     Boolean  @default(false)
+  created_at             DateTime @default(now())
   
   @@map("contaminant_mapping")
+  @@unique([pws_id, zip_code])
 }
 
 model RateLimit {

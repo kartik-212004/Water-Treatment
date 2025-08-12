@@ -222,16 +222,30 @@ export async function POST(req: NextRequest) {
         })),
       };
 
-      const waterReport = await prisma.contaminant_Mapping.create({
-        data: {
-          pws_id: pws_id,
-          zip_code: structuredReportData.zip_code,
-          water_system_name: waterSystemName,
-          detected_patriots_count: detectedPatriotsCount,
-          report_data: structuredReportData,
-          klaviyo_event_sent: false,
-        },
+      // Manually emulate an upsert (composite unique to be enforced after migration)
+      let waterReport = await prisma.contaminant_Mapping.findFirst({
+        where: { pws_id: pws_id, zip_code: structuredReportData.zip_code },
       });
+      if (!waterReport) {
+        waterReport = await prisma.contaminant_Mapping.create({
+          data: {
+            pws_id: pws_id,
+            zip_code: structuredReportData.zip_code,
+            water_system_name: waterSystemName,
+            detected_patriots_count: detectedPatriotsCount,
+            report_data: structuredReportData,
+            klaviyo_event_sent: false,
+          },
+        });
+      } else {
+        waterReport = await prisma.contaminant_Mapping.update({
+          where: { id: waterReport.id },
+          data: {
+            detected_patriots_count: detectedPatriotsCount,
+            report_data: structuredReportData,
+          },
+        });
+      }
 
       const tempReportId = `${Date.now()}_${pws_id}`;
 
@@ -317,12 +331,14 @@ export async function POST(req: NextRequest) {
             },
           };
 
-          await eventsApi.createEvent(eventPayload);
-
-          await prisma.contaminant_Mapping.update({
-            where: { id: waterReport.id },
-            data: { klaviyo_event_sent: true },
-          });
+          // Only send Klaviyo event once per mapping record
+          if (!waterReport.klaviyo_event_sent) {
+            await eventsApi.createEvent(eventPayload);
+            await prisma.contaminant_Mapping.update({
+              where: { id: waterReport.id },
+              data: { klaviyo_event_sent: true },
+            });
+          }
         } catch (klaviyoError: any) {
           console.error("Error sending event to Klaviyo:", klaviyoError);
           if (klaviyoError.response) {

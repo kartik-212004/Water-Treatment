@@ -3,7 +3,7 @@ import React from "react";
 
 export default function Header() {
   return (
-    <section className="relative mx-auto mb-10 max-w-2xl border-b border-gray-200 bg-[#101935] px-6 py-12 text-white">
+    <section className="relative mx-auto max-w-2xl border-b border-gray-200 bg-[#101935] px-6 py-12 text-white">
       <div className="mx-auto max-w-4xl">
         <div className="mb-6 flex items-center">
           <img src="/logo.webp" alt="4Patriots" className="h-12 w-auto" />

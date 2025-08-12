@@ -157,7 +157,7 @@ function ReportContent() {
           </div>
         </div>
 
-        <Card className="mb-10 rounded-sm border border-gray-200 bg-gray-100 shadow-sm">
+        <Card className="mb-10 rounded-none border border-gray-200 bg-gray-100 shadow-sm">
           <CardContent className="p-8 text-center">
             <h2 className="mb-3 text-xl font-semibold tracking-tight text-gray-900">
               {detectedPatriotsCount > 0 ? (
