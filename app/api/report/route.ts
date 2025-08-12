@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
 
     console.log("NODE_ENV:", process.env.NODE_ENV);
 
-    if (process.env.NODE_ENV) {
+    if (false) {
       const response = await axios.get(
         `https://api.gosimplelab.com/api/utilities/results?pws_id=${pws_id}&result_type=mixed`,
         {
