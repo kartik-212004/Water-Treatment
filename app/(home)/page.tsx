@@ -171,7 +171,7 @@ export default function WaterQualityReport() {
           setErrors((prev) => ({ ...prev, zipCode: "No water systems found for this zip code" }));
         }
       } catch (error: any) {
-        if (error.name === "CanceledError" || error.name === "AbortError") return; // ignore canceled
+        if (error.name === "CanceledError" || error.name === "AbortError") return;
         console.error("Error fetching water systems:", error);
         setErrors((prev) => ({ ...prev, zipCode: "Error fetching water system data" }));
         setWaterSystems([]);
