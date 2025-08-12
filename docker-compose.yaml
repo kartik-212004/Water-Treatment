@@ -1,0 +1,15 @@
+services:
+  database:
+    image: postgres:latest
+    container_name: database
+    environment:
+      - POSTGRES_USER=kartik
+      - POSTGRES_PASSWORD=2004
+      - POSTGRES_DB=water
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
