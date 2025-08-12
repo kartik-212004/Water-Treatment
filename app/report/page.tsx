@@ -10,34 +10,10 @@ import { ArrowLeft, Droplets, AlertTriangle, CheckCircle, Info } from "lucide-re
 
 import CTA from "@/components/CTA";
 import Loading from "@/components/Loading";
+import ReportSkeleton from "@/components/Suspense";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-
-const PATRIOTS_CONTAMINANTS = {
-  Lead: {
-    removalRate: "99.9%",
-    healthRisk:
-      "A neurotoxin that can cause serious health problems, particularly in pregnant women and young children.",
-  },
-  Arsenic: {
-    removalRate: "99.9%",
-    healthRisk: "A known carcinogen linked to an increased risk of skin, bladder, and lung cancer.",
-  },
-  Atrazine: {
-    removalRate: "99.9%",
-    healthRisk:
-      "An endocrine-disrupting herbicide that can interfere with hormone systems and cause reproductive harm.",
-  },
-  PFOA: {
-    removalRate: "99.9%",
-    healthRisk: "A 'forever chemical' linked to cancer, immune system effects, and developmental issues.",
-  },
-  Chloroform: {
-    removalRate: "99.9%",
-    healthRisk: "A disinfection byproduct that is a probable human carcinogen.",
-  },
-} as const;
 
 interface ContaminantData {
   name: string;
@@ -64,8 +40,22 @@ interface ContaminantData {
 interface ReportData {
   results: string;
   data: ContaminantData[];
+  prioritizedContaminants: ProcessedContaminant[];
+  detectedPatriotsCount: number;
   pws_id: string;
   generated_at: string;
+}
+
+interface ProcessedContaminant extends ContaminantData {
+  isDetected: boolean;
+  currentLevel: number;
+  healthGuideline: number;
+  exceedanceRatio: number;
+  priority: number;
+  patriotData: {
+    removalRate: string;
+    healthRisk: string;
+  };
 }
 
 function ReportContent() {
@@ -101,27 +91,6 @@ function ReportContent() {
     }
   };
 
-  const getCategoryColor = (category: string) => {
-    const colorMap: Record<string, string> = {
-      VOCs: "bg-red-100 text-red-800 border-red-200",
-      Pesticides: "bg-orange-100 text-orange-800 border-orange-200",
-      Properties: "bg-blue-100 text-blue-800 border-blue-200",
-      Metals: "bg-purple-100 text-purple-800 border-purple-200",
-      Microorganisms: "bg-green-100 text-green-800 border-green-200",
-      Other: "bg-gray-100 text-gray-800 border-gray-200",
-    };
-    return colorMap[category] || colorMap["Other"];
-  };
-
-  const getRiskLevel = (contaminant: ContaminantData) => {
-    if (contaminant.body_effects && contaminant.body_effects.length > 0) {
-      if (contaminant.body_effects.includes("cancer")) return { level: "High", color: "text-red-600" };
-      if (contaminant.body_effects.length > 2) return { level: "Medium", color: "text-orange-600" };
-      return { level: "Low", color: "text-yellow-600" };
-    }
-    return { level: "Minimal", color: "text-green-600" };
-  };
-
   if (loading) {
     return <Loading zipcode={zipCode} />;
   }
@@ -146,54 +115,13 @@ function ReportContent() {
     );
   }
 
-  const allPatriotsContaminants = reportData.data.filter((item) => {
-    return Object.keys(PATRIOTS_CONTAMINANTS).includes(item.name);
-  });
-
-  // Calculate health guideline exceedance and prioritize
-  const prioritizedContaminants = allPatriotsContaminants
-    .map((item) => {
-      const isDetected =
-        item.detection_rate && item.detection_rate !== "0%" && item.detection_rate !== "0.00%";
-      const currentLevel = item.average || item.median || 0;
-      const healthGuideline = item.fed_mclg || item.fed_mcl || Infinity;
-
-      // Calculate exceedance ratio (higher = worse)
-      const exceedanceRatio = healthGuideline > 0 ? currentLevel / healthGuideline : 0;
-
-      return {
-        ...item,
-        isDetected,
-        currentLevel,
-        healthGuideline,
-        exceedanceRatio,
-        priority: isDetected ? exceedanceRatio : 0, // Detected contaminants get priority
-      };
-    })
-    .sort((a, b) => {
-      // First sort by detection status (detected first)
-      if (a.isDetected && !b.isDetected) return -1;
-      if (!a.isDetected && b.isDetected) return 1;
-      // Then sort by exceedance ratio (highest first)
-      return b.priority - a.priority;
-    })
-    .slice(0, 7); // Show top 5-7 contaminants
-
-  const detectedPatriotsCount = prioritizedContaminants.filter((item) => item.isDetected).length;
-
-  const categorizedData = reportData.data.reduce(
-    (acc, item) => {
-      if (!acc[item.category]) acc[item.category] = [];
-      acc[item.category].push(item);
-      return acc;
-    },
-    {} as Record<string, ContaminantData[]>
-  );
+  const prioritizedContaminants = reportData.prioritizedContaminants;
+  const detectedPatriotsCount = reportData.detectedPatriotsCount;
 
   return (
     <div className="relative m-0 min-h-screen bg-white pb-12">
-      <div className="mx-auto max-w-7xl py-0 sm:py-2">
-        <div className="relative mb-8 overflow-hidden border-b border-gray-200 bg-[#101935] px-6 py-10 shadow-sm sm:rounded-none">
+      <div className="mx-auto max-w-7xl">
+        <div className="relative overflow-hidden border-b border-gray-200 bg-[#101935] px-6 py-10 shadow-sm sm:rounded-none">
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center space-x-3">
               <Image src="/logo.webp" width={200} height={100} alt="Logo" />
@@ -249,8 +177,6 @@ function ReportContent() {
         {prioritizedContaminants.length > 0 ? (
           <div className="mb-8 space-y-6">
             {prioritizedContaminants.map((contaminant, index) => {
-              const patriotData =
-                PATRIOTS_CONTAMINANTS[contaminant.name as keyof typeof PATRIOTS_CONTAMINANTS];
               const guideline = contaminant.fed_mclg ?? null;
               const legal = contaminant.fed_mcl ?? null;
               return (
@@ -279,7 +205,7 @@ function ReportContent() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge
-                          className={`text-[10px] font-semibold tracking-wide ${contaminant.isDetected ? "bg-[#101935] text-white" : "bg-gray-200 text-gray-700"}`}>
+                          className={`text-[10px] font-semibold tracking-wide ${contaminant.isDetected ? "bg-[#101935] text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-200"}`}>
                           {contaminant.isDetected ? `PRIORITY ${index + 1}` : "NOT DETECTED"}
                         </Badge>
                         <div className="text-right">
@@ -291,9 +217,11 @@ function ReportContent() {
                       </div>
                     </div>
                     {/* Risk Text */}
-                    <p className="mb-5 text-sm leading-relaxed text-gray-600">{patriotData.healthRisk}</p>
+                    <p className="mb-5 text-sm leading-relaxed text-gray-600">
+                      {contaminant.patriotData.healthRisk}
+                    </p>
                     {/* Stats Grid */}
-                    <div className="mb-5 grid gap-3 sm:grid-cols-4">
+                    <div className="mb-5 grid gap-3 sm:grid-cols-3">
                       <div
                         className={`rounded-md border p-3 ${contaminant.isDetected ? "border-[#101935]/30 bg-[#101935]/5" : "border-gray-200 bg-gray-50"}`}>
                         <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">
@@ -308,19 +236,19 @@ function ReportContent() {
                       </div>
                       <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
                         <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">
-                          Guideline
+                          Health Guideline
                         </p>
                         <p className="text-base font-semibold text-gray-800">
                           {guideline ? `${guideline} ${contaminant.unit}` : "—"}
                         </p>
-                      </div>
-                      <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
-                        <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">
-                          EPA Limit
-                        </p>
-                        <p className="text-base font-semibold text-gray-800">
-                          {legal ? `${legal} ${contaminant.unit}` : "—"}
-                        </p>
+                        <div className="mt-2 border-t border-gray-300 pt-2">
+                          <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">
+                            EPA Limit
+                          </p>
+                          <p className="text-sm font-semibold text-gray-800">
+                            {legal ? `${legal} ${contaminant.unit}` : "—"}
+                          </p>
+                        </div>
                       </div>
                       <div className="flex flex-col items-center justify-center rounded-md border border-green-300 bg-green-50 px-2 py-3 text-center">
                         <CheckCircle className="mb-1 h-5 w-5 text-green-600" />
@@ -328,7 +256,7 @@ function ReportContent() {
                           Patriot Pure® Removal:
                         </p>
                         <p className="text-2xl font-bold tracking-tight text-green-700">
-                          {patriotData.removalRate}
+                          {contaminant.patriotData.removalRate}
                         </p>
                       </div>
                     </div>
@@ -372,7 +300,7 @@ function ReportContent() {
 
 export default function Report() {
   return (
-    <Suspense fallback={<div>Loading report...</div>}>
+    <Suspense fallback={<ReportSkeleton />}>
       <ReportContent />
     </Suspense>
   );

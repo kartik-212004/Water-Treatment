@@ -29,7 +29,12 @@ export default function CTA() {
             <Button
               size="lg"
               className="bg-[#FFC400] px-10 py-5 text-base font-semibold text-[#101935] shadow hover:bg-[#e6b100]"
-              onClick={() => window.open("https://4patriots.com/", "_blank")}>
+              onClick={() =>
+                window.open(
+                  "https://4patriots.com/product/patriot-pure-ultimate-water-filtration-system-nanomesh-filter",
+                  "_blank"
+                )
+              }>
               View Filter Details
               <ExternalLink className="ml-2 h-5 w-5" />
             </Button>
