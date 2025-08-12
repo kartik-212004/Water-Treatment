@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import axios from "axios";
 import { Droplets, Mail, MapPin, Phone } from "lucide-react";
@@ -72,9 +72,8 @@ export default function WaterQualityReport() {
       newErrors.consent = "You must agree to receive communications";
     }
 
-    if (waterSystems.length > 1 && !selectedPwsid) {
+    if (waterSystems.length > 0 && !selectedPwsid)
       newErrors.waterSystem = "Please select your water provider";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -127,37 +126,65 @@ export default function WaterQualityReport() {
     }
   };
 
-  const handleInputChange = async (field: string, value: string | boolean) => {
+  // Ref to keep track of current fetch abort controller
+  const fetchAbortRef = useRef<AbortController | null>(null);
+
+  const handleInputChange = (field: string, value: string | boolean) => {
     if (field === "zipCode" && typeof value === "string") {
-      setFormData((prev) => ({ ...prev, [field]: value }));
-      setWaterSystems([]);
+      // Sanitize: digits only, max 5 chars
+      const cleaned = value.replace(/\D/g, "").slice(0, 5);
+      setFormData((prev) => ({ ...prev, zipCode: cleaned }));
       setSelectedPwsid("");
-      if (value.length === 5) {
-        setIsLoadingWaterSystems(true);
-        try {
-          const response = await axios.get(
-            `https://data.epa.gov/efservice/WATER_SYSTEM/ZIP_CODE/${value}/JSON`
-          );
-          const data: WaterSystem[] = response.data;
-          if (Array.isArray(data) && data.length > 0) {
-            setWaterSystems(data);
-            if (data.length === 1) setSelectedPwsid(data[0].pwsid);
-          } else {
-            setWaterSystems([]);
-            setErrors((prev) => ({ ...prev, zipCode: "No water systems found for this zip code" }));
-          }
-        } catch (error) {
-          console.error("Error fetching water systems:", error);
-          setErrors((prev) => ({ ...prev, zipCode: "Error fetching water system data" }));
-        } finally {
-          setIsLoadingWaterSystems(false);
-        }
-      }
-    } else {
-      setFormData((prev) => ({ ...prev, [field]: value }));
+      if (errors.zipCode) setErrors((prev) => ({ ...prev, zipCode: "" }));
+      // Don't immediately fetch here (debounced effect will handle it)
+      return;
     }
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
+
+  // Debounced fetch when ZIP becomes 5 digits
+  useEffect(() => {
+    const zip = formData.zipCode;
+    if (zip.length !== 5) {
+      setWaterSystems([]);
+      setIsLoadingWaterSystems(false);
+      return;
+    }
+
+    setIsLoadingWaterSystems(true);
+
+    const controller = new AbortController();
+    if (fetchAbortRef.current) fetchAbortRef.current.abort();
+    fetchAbortRef.current = controller;
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        const response = await axios.get(`https://data.epa.gov/efservice/WATER_SYSTEM/ZIP_CODE/${zip}/JSON`, {
+          signal: controller.signal,
+        });
+        const data: WaterSystem[] = response.data;
+        if (Array.isArray(data) && data.length > 0) {
+          setWaterSystems(data);
+        } else {
+          setWaterSystems([]);
+          setErrors((prev) => ({ ...prev, zipCode: "No water systems found for this zip code" }));
+        }
+      } catch (error: any) {
+        if (error.name === "CanceledError" || error.name === "AbortError") return; // ignore canceled
+        console.error("Error fetching water systems:", error);
+        setErrors((prev) => ({ ...prev, zipCode: "Error fetching water system data" }));
+        setWaterSystems([]);
+      } finally {
+        setIsLoadingWaterSystems(false);
+      }
+    }, 350);
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [formData.zipCode]);
 
   const handleWaterSystemSelect = (pwsid: string) => {
     setSelectedPwsid(pwsid);
@@ -172,7 +199,10 @@ export default function WaterQualityReport() {
     (!!formData.phone && !!errors.phone) ||
     !!errors.zipCode ||
     !!errors.email ||
-    (waterSystems.length > 1 && !selectedPwsid);
+    (waterSystems.length > 0 && !selectedPwsid);
+
+  const isSelectDisabled =
+    !formData.zipCode || formData.zipCode.length < 5 || isLoadingWaterSystems || waterSystems.length === 0;
 
   return (
     <div className="relative bg-white pb-16">
@@ -212,24 +242,38 @@ export default function WaterQualityReport() {
                       </div>
                     )}
 
-                    {waterSystems.length > 1 && (
-                      <div className="space-y-3">
-                        <Label
-                          htmlFor="waterSystem"
-                          className="text-[11px] font-semibold uppercase tracking-wide text-black md:text-sm">
-                          Select Your Water Provider *
-                        </Label>
-                        <div className="relative">
-                          <Droplets className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400 md:left-4 md:h-5 md:w-5" />
-                          <Select value={selectedPwsid} onValueChange={handleWaterSystemSelect}>
-                            <SelectTrigger
-                              className={`h-10 rounded-lg border-2 pl-9 text-base transition-all duration-200 md:h-14 md:rounded-xl md:pl-12 md:text-lg ${
-                                errors.waterSystem
-                                  ? "border-red-500 focus:border-red-500"
-                                  : "border-gray-200 focus:border-black"
-                              } bg-white text-black`}>
-                              <SelectValue placeholder="Choose your water provider..." />
-                            </SelectTrigger>
+                    {/* Always show select (disabled until data) */}
+                    <div className="space-y-3">
+                      <Label
+                        htmlFor="waterSystem"
+                        className="text-[11px] font-semibold uppercase tracking-wide text-black md:text-sm">
+                        Select Your Water Provider *
+                      </Label>
+                      <div className="relative">
+                        <Droplets className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400 md:left-4 md:h-5 md:w-5" />
+                        <Select
+                          value={selectedPwsid}
+                          onValueChange={handleWaterSystemSelect}
+                          disabled={isSelectDisabled}>
+                          <SelectTrigger
+                            className={`h-10 rounded-lg border-2 pl-9 text-base transition-all duration-200 md:h-14 md:rounded-xl md:pl-12 md:text-lg ${
+                              errors.waterSystem
+                                ? "border-red-500 focus:border-red-500"
+                                : "border-gray-200 focus:border-black"
+                            } ${isSelectDisabled ? "opacity-60" : ""} bg-white text-black`}>
+                            <SelectValue
+                              placeholder={
+                                !formData.zipCode
+                                  ? "Enter ZIP code first"
+                                  : isLoadingWaterSystems
+                                    ? "Loading providers..."
+                                    : waterSystems.length === 0
+                                      ? "No providers found"
+                                      : "Choose your water provider..."
+                              }
+                            />
+                          </SelectTrigger>
+                          {waterSystems.length > 0 && (
                             <SelectContent>
                               {waterSystems.map((system) => (
                                 <SelectItem key={system.pwsid} value={system.pwsid}>
@@ -244,34 +288,31 @@ export default function WaterQualityReport() {
                                 </SelectItem>
                               ))}
                             </SelectContent>
-                          </Select>
-                        </div>
-                        {errors.waterSystem && (
-                          <p className="text-xs font-medium text-red-500 md:text-sm">{errors.waterSystem}</p>
-                        )}
+                          )}
+                        </Select>
+                      </div>
+                      {errors.waterSystem && (
+                        <p className="text-xs font-medium text-red-500 md:text-sm">{errors.waterSystem}</p>
+                      )}
+                      {waterSystems.length > 1 && !errors.waterSystem && (
                         <div className="rounded-lg bg-blue-50 p-3">
                           <p className="text-[11px] text-blue-800 md:text-xs">
                             Multiple water systems serve your area. Please select your specific water provider
                             to get the most accurate report.
                           </p>
                         </div>
-                      </div>
-                    )}
-
-                    {waterSystems.length === 1 && (
-                      <div className="rounded-lg bg-green-50 p-3">
-                        <div className="flex items-center space-x-2">
-                          <Droplets className="h-4 w-4 text-green-600" />
-                          <span className="text-xs font-medium text-green-800 md:text-sm">
-                            Water Provider Found: {waterSystems[0].pws_name}
-                          </span>
+                      )}
+                      {waterSystems.length === 1 && (
+                        <div className="rounded-lg bg-green-50 p-3">
+                          <div className="flex items-center space-x-2">
+                            <Droplets className="h-4 w-4 text-green-600" />
+                            <span className="text-xs font-medium text-green-800 md:text-sm">
+                              1 provider found. Please confirm selection.
+                            </span>
+                          </div>
                         </div>
-                        <p className="mt-1 text-[11px] text-green-700 md:text-xs">
-                          PWSID: {waterSystems[0].pwsid} • Serves{" "}
-                          {waterSystems[0].population_served_count?.toLocaleString()} people
-                        </p>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-3">
@@ -352,7 +393,7 @@ export default function WaterQualityReport() {
                     {isSubmitting && (
                       <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     )}
-                    {waterSystems.length > 1 && !selectedPwsid
+                    {waterSystems.length > 0 && !selectedPwsid
                       ? "Select Water Provider First"
                       : isSubmitting
                         ? "Submitting..."

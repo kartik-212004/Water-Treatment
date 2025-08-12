@@ -127,7 +127,7 @@ function ReportContent() {
   const detectedPatriotsCount = reportData.detectedPatriotsCount;
 
   return (
-    <div className="relative m-0 min-h-screen bg-white pb-12">
+    <div className="relative m-0 min-h-screen bg-white">
       <div className="mx-auto max-w-7xl">
         <div className="relative overflow-hidden border-b border-gray-200 bg-[#101935] px-6 py-10 shadow-sm sm:rounded-none">
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
