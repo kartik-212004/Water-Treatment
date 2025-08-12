@@ -2,12 +2,54 @@ import { NextRequest, NextResponse } from "next/server";
 
 import axios from "axios";
 import fs from "fs";
+import { ApiKeySession, EventsApi, ProfilesApi } from "klaviyo-api";
 import path from "path";
 
 import { PATRIOTS_CONTAMINANTS } from "@/lib/constants";
+import prisma from "@/lib/prisma";
+
+const session = new ApiKeySession(process.env.KLAVIYO_API_KEY || "");
+const eventsApi = new EventsApi(session);
+
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+async function determineUserEmail(
+  pws_id: string,
+  providedEmail?: string
+): Promise<{ email: string | null; source: "provided" | "existing" | "none"; isValid: boolean }> {
+  if (providedEmail && isValidEmail(providedEmail)) {
+    console.log(`Using provided email: ${providedEmail}`);
+    return { email: providedEmail, source: "provided", isValid: true };
+  }
+
+  if (providedEmail && !isValidEmail(providedEmail)) {
+    console.warn(`Invalid email format provided: ${providedEmail}`);
+  }
+
+  try {
+    const existingLead = await prisma.leads.findFirst({
+      where: { pwsid: pws_id },
+      orderBy: { created_at: "desc" },
+    });
+
+    if (existingLead?.email && isValidEmail(existingLead.email)) {
+      console.log(`Found existing valid email: ${existingLead.email}`);
+      return { email: existingLead.email, source: "existing", isValid: true };
+    }
+  } catch (leadSearchError) {
+    console.log("Could not search for existing lead:", leadSearchError);
+  }
+
+  return { email: null, source: "none", isValid: false };
+}
 
 interface RequestBody {
   pws_id: string;
+  email?: string;
+  zipCode: string;
 }
 
 interface ContaminantData {
@@ -46,10 +88,20 @@ interface ProcessedContaminant extends ContaminantData {
 
 export async function POST(req: NextRequest) {
   try {
-    const { pws_id }: RequestBody = await req.json();
+    const { pws_id, email, zipCode }: RequestBody = await req.json();
 
     if (!pws_id) {
       return NextResponse.json({ error: "PWSID is required" }, { status: 400 });
+    }
+
+    if (email && !isValidEmail(email)) {
+      return NextResponse.json(
+        {
+          error: "Invalid email format provided",
+          details: "Please provide a valid email address",
+        },
+        { status: 400 }
+      );
     }
 
     let reportData;
@@ -117,7 +169,191 @@ export async function POST(req: NextRequest) {
       detectedPatriotsCount,
       pws_id: pws_id,
       generated_at: new Date().toISOString(),
+      email_captured: false,
+      requires_email_capture: true,
+      email_source: "none" as "provided" | "existing" | "none",
+      email_valid: false,
+      can_send_immediate_email: false,
+      email_status_message: "",
     };
+
+    try {
+      const waterSystemName = reportData.results || "Unknown Water System";
+
+      const emailResult = await determineUserEmail(pws_id, email);
+
+      response.email_captured = !!emailResult.email;
+      response.requires_email_capture = !emailResult.email;
+      response.email_source = emailResult.source;
+      response.email_valid = emailResult.isValid;
+      response.can_send_immediate_email = !!emailResult.email;
+
+      if (emailResult.email) {
+        switch (emailResult.source) {
+          case "provided":
+            response.email_status_message = "Report will be sent to the provided email address";
+            break;
+          case "existing":
+            response.email_status_message = "Report will be sent to your previously used email address";
+            break;
+        }
+      } else {
+        response.email_status_message = "Please provide an email address to receive your detailed report";
+      }
+
+      console.log(`Email determination result:`, {
+        email: emailResult.email ? `${emailResult.email.substring(0, 3)}***` : "none",
+        source: emailResult.source,
+        isValid: emailResult.isValid,
+        canSendImmediate: response.can_send_immediate_email,
+      });
+
+      const structuredReportData = {
+        zip_code: zipCode,
+        water_system_name: waterSystemName,
+        pws_id: pws_id,
+        detected_patriots_count: detectedPatriotsCount,
+        generated_at: response.generated_at,
+        contaminants: prioritizedContaminants.map((contaminant: ProcessedContaminant) => ({
+          name: contaminant.name,
+          health_risk: contaminant.patriotData.healthRisk,
+          local_level: contaminant.currentLevel
+            ? `${contaminant.currentLevel} ${contaminant.unit || "ppb"}`
+            : "Not detected",
+          health_guideline:
+            contaminant.healthGuideline !== Infinity
+              ? `${contaminant.healthGuideline} ${contaminant.unit || "ppb"}`
+              : "No guideline",
+          legal_limit: contaminant.fed_mcl
+            ? `${contaminant.fed_mcl} ${contaminant.unit || "ppb"}`
+            : "No limit set",
+          removal_rate: contaminant.patriotData.removalRate,
+          detection_rate: contaminant.detection_rate,
+          is_detected: contaminant.isDetected,
+          exceedance_ratio: contaminant.exceedanceRatio,
+          category: contaminant.category,
+        })),
+      };
+
+      // TODO: Re-enable database storage once schema is synced with the database
+      // const waterReport = await prisma.contaminant_Mapping.create({
+      //   data: {
+      //     pws_id: pws_id,
+      //     zip_code: structuredReportData.zip_code,
+      //     water_system_name: waterSystemName,
+      //     detected_patriots_count: detectedPatriotsCount,
+      //     report_data: structuredReportData,
+      //     klaviyo_event_sent: false,
+      //   },
+      // });
+
+      const tempReportId = `${Date.now()}_${pws_id}`;
+
+      if (process.env.KLAVIYO_API_KEY) {
+        try {
+          if (emailResult.email && emailResult.source === "provided") {
+            try {
+              await prisma.leads.upsert({
+                where: {
+                  email: emailResult.email,
+                },
+                create: {
+                  email: emailResult.email,
+                  pwsid: pws_id,
+                  zip_code: structuredReportData.zip_code,
+                  created_at: new Date(),
+                },
+                update: {
+                  pwsid: pws_id,
+                  created_at: new Date(),
+                },
+              });
+              console.log(`Saved/updated email in leads table: ${emailResult.email}`);
+            } catch (leadSaveError) {
+              console.warn("Could not save lead to database:", leadSaveError);
+            }
+          }
+
+          const eventPayload = {
+            data: {
+              type: "event" as const,
+              attributes: {
+                properties: {
+                  zip_code: structuredReportData.zip_code,
+                  water_system_name: structuredReportData.water_system_name,
+                  pws_id: structuredReportData.pws_id,
+                  detected_patriots_count: structuredReportData.detected_patriots_count,
+                  generated_at: structuredReportData.generated_at,
+                  contaminants: structuredReportData.contaminants,
+                  has_lead: structuredReportData.contaminants.some(
+                    (c: any) => c.name === "Lead" && c.is_detected
+                  ),
+                  has_arsenic: structuredReportData.contaminants.some(
+                    (c: any) => c.name === "Arsenic" && c.is_detected
+                  ),
+                  has_pfas: structuredReportData.contaminants.some(
+                    (c: any) => c.name.includes("PF") && c.is_detected
+                  ),
+                  high_priority_count: structuredReportData.contaminants.filter(
+                    (c: any) => c.is_detected && c.exceedance_ratio > 0.5
+                  ).length,
+
+                  report_summary: `${structuredReportData.detected_patriots_count} priority contaminants detected in ${structuredReportData.water_system_name}`,
+
+                  email_deliverable: !!emailResult.email,
+                  delivery_method: emailResult.email ? "immediate" : "manual_capture_required",
+                  email_source: emailResult.source,
+                  email_provided_in_request: !!email,
+                  email_found_in_database: emailResult.source === "existing",
+                },
+                metric: {
+                  data: {
+                    type: "metric" as const,
+                    attributes: {
+                      name: "Generated Water Report",
+                    },
+                  },
+                },
+                profile: {
+                  data: {
+                    type: "profile" as const,
+                    attributes: emailResult.email
+                      ? {
+                          email: emailResult.email,
+                        }
+                      : {
+                          email: `anonymous+${tempReportId}@waterreport.local`,
+                        },
+                  },
+                },
+                time: new Date(),
+                unique_id: `water_report_${tempReportId}`,
+              },
+            },
+          };
+
+          await eventsApi.createEvent(eventPayload);
+
+          // TODO: Re-enable database update once schema is synced
+          // await prisma.contaminant_Mapping.update({
+          //   where: { id: tempReportId },
+          //   data: { klaviyo_event_sent: true },
+          // });
+
+          console.log("Water report event sent to Klaviyo successfully");
+        } catch (klaviyoError: any) {
+          console.error("Error sending event to Klaviyo:", klaviyoError);
+          if (klaviyoError.response) {
+            console.error("Klaviyo API Response Status:", klaviyoError.response.status);
+            console.error("Klaviyo API Response Data:", klaviyoError.response.data);
+          }
+        }
+      } else {
+        console.warn("KLAVIYO_API_KEY not set, skipping event creation");
+      }
+    } catch (error) {
+      console.error("Error in post-processing:", error);
+    }
 
     return NextResponse.json(response);
   } catch (error) {

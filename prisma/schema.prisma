@@ -16,14 +16,18 @@ model leads {
   pwsid        String?
 }
 
-model contaminant_mapping {
-  id                      String @id @default(uuid())
-  patriot_name            String
-  wqp_characteristic_name String
-  removal_percentage      String
-  health_risk_blurb       String
-  health_guideline_ppb    Float
-  legal_limit_ppb         Float
+
+
+model Contaminant_Mapping {
+  id                     String   @id @default(uuid())
+  pws_id                 String
+  zip_code               String?
+  water_system_name      String?
+  detected_patriots_count Int
+  report_data            Json     
+  klaviyo_event_sent     Boolean  @default(false)
+  
+  @@map("contaminant_mapping")
 }
 
 model RateLimit {

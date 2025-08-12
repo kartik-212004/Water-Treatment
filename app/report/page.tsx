@@ -62,6 +62,7 @@ function ReportContent() {
   const searchParams = useSearchParams();
   const pwsid = searchParams.get("pwsid");
   const zipCode = searchParams.get("zipcode") || pwsid;
+  const email = searchParams.get("email");
 
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,6 +82,8 @@ function ReportContent() {
       setLoading(true);
       const response = await axios.post("/api/report", {
         pws_id: pwsid,
+        email: email,
+        zipCode: zipCode,
       });
       setReportData(response.data);
     } catch (err) {
@@ -142,7 +145,7 @@ function ReportContent() {
             </h1>
             <div className="max-w-2xl text-sm font-medium text-white/70">
               Service Area: <span className="text-white">{zipCode}</span> · Priority contaminants detected:{" "}
-              <span className="text-[#B40014]">{detectedPatriotsCount}</span>
+              <span className="font-medium text-red-400">{detectedPatriotsCount}</span>
               {"  "}
               <Badge className="rounded-md bg-white/10 text-white ring-1 ring-inset ring-white/20">
                 {new Date(reportData.generated_at).toLocaleDateString("en-US", {

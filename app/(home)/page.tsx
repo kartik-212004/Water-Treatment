@@ -11,7 +11,6 @@ import z from "zod";
 
 import { WaterSystem, emailSchema, phoneSchema, zipCodeSchema } from "@/lib/form-schema";
 
-import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -89,7 +88,6 @@ export default function WaterQualityReport() {
     try {
       const pwsidToUse = waterSystems.length === 1 ? waterSystems[0].pwsid : selectedPwsid;
 
-      // Submit form data
       await axios.post("/api/form", {
         email: formData.email,
         phoneNumber: formData.phone || undefined,
@@ -102,10 +100,9 @@ export default function WaterQualityReport() {
         duration: 2000,
       });
 
-      // Wait a moment for the toast, then redirect to report page with pwsid and zipcode
       setTimeout(() => {
-        router.push(`/report?pwsid=${pwsidToUse}&zipcode=${formData.zipCode}`);
-      }, 1000);
+        router.push(`/report?pwsid=${pwsidToUse}&zipcode=${formData.zipCode}&email=${formData.email}`);
+      }, 500);
     } catch (err: any) {
       console.error("Submit failed", err);
 
@@ -127,7 +124,6 @@ export default function WaterQualityReport() {
         });
       }
     } finally {
-      // end try
     }
   };
 
