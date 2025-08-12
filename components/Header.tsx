@@ -9,11 +9,11 @@ export default function Header() {
       </div>
 
       <div className="mb-6">
-        <p className="mb-4 text-sm font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">
+        <p className="mb-4 text-sm font-medium uppercase tracking-wider text-gray-600">
           WATER QUALITY ANALYSIS
         </p>
 
-        <p className="mx-auto max-w-2xl text-lg text-gray-600 dark:text-gray-400">
+        <p className="mx-auto max-w-2xl text-lg text-gray-600">
           What's Really In Your Tap Water? Get Your FREE Personalized Water Report.
         </p>
       </div>
