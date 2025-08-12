@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { ApiKeySession, ProfileCreateQuery, ProfileEnum, ProfilesApi } from "klaviyo-api";
 
+import { FormSubmission, formSubmissionSchema } from "@/lib/form-schema";
 import prisma from "@/lib/prisma";
-
-import { FormSubmission, formSubmissionSchema } from "@/zodSchema/form";
 
 const session = new ApiKeySession(process.env.KLAVIYO_API_KEY || "");
 const profilesApi = new ProfilesApi(session);
