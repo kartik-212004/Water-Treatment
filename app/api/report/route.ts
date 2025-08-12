@@ -80,7 +80,6 @@ export async function POST(req: NextRequest) {
     console.log("NODE_ENV:", process.env.NODE_ENV);
 
     if (process.env.NODE_ENV) {
-      console.log("production");
       const response = await axios.get(
         `https://api.gosimplelab.com/api/utilities/results?pws_id=${pws_id}&result_type=mixed`,
         {
@@ -93,7 +92,6 @@ export async function POST(req: NextRequest) {
       reportData = response.data;
       console.log(reportData);
     } else {
-      console.log("development");
       const filePath = path.join(process.cwd(), "result.json");
       const fileContents = fs.readFileSync(filePath, "utf8");
       reportData = JSON.parse(fileContents);
