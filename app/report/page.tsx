@@ -191,7 +191,7 @@ function ReportContent() {
   );
 
   return (
-    <div className="relative min-h-screen bg-white pb-12">
+    <div className="relative m-0 min-h-screen bg-white pb-12">
       <div className="mx-auto max-w-7xl py-2">
         <div className="relative mb-8 overflow-hidden border-b border-gray-200 bg-[#101935] px-6 py-10 shadow-sm sm:rounded-none">
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -260,7 +260,7 @@ function ReportContent() {
                     contaminant.isDetected ? "bg-white" : "bg-white"
                   }`}>
                   <div
-                    className={`absolute left-0 top-0 h-full w-1 ${contaminant.isDetected ? "bg-[#B40014]" : "bg-gray-300"}`}></div>
+                    className={`absolute left-0 top-0 h-full ${contaminant.isDetected ? "bg-[#B40014]" : "bg-gray-300"}`}></div>
                   <CardContent className="p-5 sm:p-6">
                     {/* Header */}
                     <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
@@ -355,7 +355,7 @@ function ReportContent() {
         <CTA />
 
         {/* Disclaimer */}
-        <Card className="mb-8 rounded-2xl border border-gray-200 bg-gray-50 shadow-sm">
+        <Card className="rounded-none border border-gray-200 bg-gray-50 shadow-sm sm:rounded-2xl">
           <CardContent className="p-6">
             <p className="text-center text-sm text-gray-600">
               <Info className="mr-1 inline h-4 w-4" />
