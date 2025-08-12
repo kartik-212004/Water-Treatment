@@ -33,7 +33,7 @@ export default function CTA() {
               View Filter Details
               <ExternalLink className="ml-2 h-5 w-5" />
             </Button>
-            <p className="text-[11px] uppercase tracking-wide text-white/40">Limited Inventory</p>
+            <p className="text-[11px] uppercase tracking-wide text-white">Limited Inventory</p>
           </div>
         </div>
       </CardContent>

@@ -192,7 +192,7 @@ export default function WaterQualityReport() {
     <div className="relative bg-white px-4 pb-12 dark:bg-black">
       <div className="mx-auto max-w-4xl">
         <div className="mx-auto max-w-2xl">
-          <Card className="overflow-hidden rounded-2xl border border-gray-200 shadow-xl dark:border-gray-800">
+          <Card className="overflow-hidden rounded-sm border border-gray-200 shadow-xl dark:border-gray-800">
             <CardHeader className="border-b border-gray-200 bg-white p-8 dark:border-gray-800 dark:bg-black">
               <CardTitle className="text-center text-2xl font-bold text-black dark:text-white">
                 Get Your Water Quality Report

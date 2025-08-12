@@ -3,7 +3,7 @@ import React from "react";
 export default function Loading({ zipcode }: { zipcode: string | null }) {
   const zipCode = zipcode;
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-white px-4">
       <div className="max-w-2xl space-y-6 text-center">
         <div className="flex justify-center">
           <div className="relative">
