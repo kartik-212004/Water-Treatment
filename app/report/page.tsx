@@ -10,7 +10,7 @@ import { ArrowLeft, Droplets, AlertTriangle, CheckCircle, Info } from "lucide-re
 
 import CTA from "@/components/CTA";
 import Loading from "@/components/Loading";
-import ReportSkeleton from "@/components/Suspense";
+import { ReportSkeleton } from "@/components/Suspense";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -105,7 +105,7 @@ function ReportContent() {
             <p className="text-lg text-gray-600">{error}</p>
           </div>
           <Link href="/">
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Form
             </Button>
@@ -127,17 +127,11 @@ function ReportContent() {
               <Image src="/logo.webp" width={200} height={100} alt="Logo" />
             </div>
             <div className="flex items-center gap-3">
-              <Badge className="bg-white/10 text-white ring-1 ring-inset ring-white/20">
-                {new Date(reportData.generated_at).toLocaleDateString("en-US", {
-                  month: "short",
-                  year: "numeric",
-                })}
-              </Badge>
               <Link href="/" className="hidden sm:inline-block">
                 <Button
                   variant="outline"
                   className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white">
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                  <ArrowLeft className="h-4 w-4" /> Back
                 </Button>
               </Link>
             </div>
@@ -146,10 +140,16 @@ function ReportContent() {
             <h1 className="max-w-3xl text-3xl font-semibold leading-tight text-white md:text-4xl lg:text-5xl">
               Personalized Water Quality Report
             </h1>
-            <p className="max-w-2xl text-sm font-medium tracking-wide text-white/70">
+            <div className="max-w-2xl text-sm font-medium text-white/70">
               Service Area: <span className="text-white">{zipCode}</span> · Priority contaminants detected:{" "}
-              {detectedPatriotsCount}
-            </p>
+              {detectedPatriotsCount}{" "}
+              <Badge className="rounded-md bg-white/10 text-white ring-1 ring-inset ring-white/20">
+                {new Date(reportData.generated_at).toLocaleDateString("en-US", {
+                  month: "short",
+                  year: "numeric",
+                })}
+              </Badge>
+            </div>
           </div>
         </div>
 

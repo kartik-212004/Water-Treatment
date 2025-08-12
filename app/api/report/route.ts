@@ -90,7 +90,6 @@ export async function POST(req: NextRequest) {
         }
       );
       reportData = response.data;
-      console.log(reportData);
     } else {
       const filePath = path.join(process.cwd(), "result.json");
       const fileContents = fs.readFileSync(filePath, "utf8");
@@ -124,23 +123,20 @@ export async function POST(req: NextRequest) {
         };
       })
       .sort((a: ProcessedContaminant, b: ProcessedContaminant) => {
-        // First sort by detection status (detected first)
         if (a.isDetected && !b.isDetected) return -1;
         if (!a.isDetected && b.isDetected) return 1;
-        // Then sort by exceedance ratio (highest first)
         return b.priority - a.priority;
       })
-      .slice(0, 7); // Show top 5-7 contaminants
+      .slice(0, 7);
 
     const detectedPatriotsCount = prioritizedContaminants.filter(
       (item: ProcessedContaminant) => item.isDetected
     ).length;
 
-    // Add the processed data to the response
     const response = {
       results: reportData.results,
-      data: reportData.data, // Keep original data for reference
-      prioritizedContaminants, // Add filtered and processed contaminants
+      data: reportData.data,
+      prioritizedContaminants,
       detectedPatriotsCount,
       pws_id: pws_id,
       generated_at: new Date().toISOString(),

@@ -200,7 +200,7 @@ export default function WaterQualityReport() {
                         placeholder="Enter your zip code (e.g., 90210)"
                         value={formData.zipCode}
                         onChange={(e) => handleInputChange("zipCode", e.target.value)}
-                        className={`h-10 rounded-lg border-2 pl-9 text-base transition-all duration-200 md:h-14 md:rounded-xl md:pl-12 md:text-lg ${
+                        className={`h-10 rounded-lg border-2 pl-9 text-base transition-all duration-200 placeholder:text-sm md:h-14 md:rounded-xl md:pl-12 md:text-lg md:placeholder:text-base ${
                           errors.zipCode
                             ? "border-red-500 focus:border-red-500"
                             : "border-gray-200 focus:border-black"
@@ -292,7 +292,7 @@ export default function WaterQualityReport() {
                         placeholder="your.email@example.com"
                         value={formData.email}
                         onChange={(e) => handleInputChange("email", e.target.value)}
-                        className={`h-10 rounded-lg border-2 pl-9 text-base transition-all duration-200 md:h-14 md:rounded-xl md:pl-12 md:text-lg ${
+                        className={`h-10 rounded-lg border-2 pl-9 text-base transition-all duration-200 placeholder:text-sm md:h-14 md:rounded-xl md:pl-12 md:text-lg md:placeholder:text-base ${
                           errors.email
                             ? "border-red-500 focus:border-red-500"
                             : "border-gray-200 focus:border-black"
@@ -318,7 +318,7 @@ export default function WaterQualityReport() {
                         placeholder="(555) 123-4567"
                         value={formData.phone}
                         onChange={(e) => handleInputChange("phone", e.target.value)}
-                        className={`h-10 rounded-lg border-2 pl-9 text-base transition-all duration-200 md:h-14 md:rounded-xl md:pl-12 md:text-lg ${
+                        className={`h-10 rounded-lg border-2 pl-9 text-base transition-all duration-200 placeholder:text-sm md:h-14 md:rounded-xl md:pl-12 md:text-lg md:placeholder:text-base ${
                           errors.phone
                             ? "border-red-500 focus:border-red-500"
                             : "border-gray-200 focus:border-black"
