@@ -21,7 +21,6 @@ async function determineUserEmail(
   providedEmail?: string
 ): Promise<{ email: string | null; source: "provided" | "existing" | "none"; isValid: boolean }> {
   if (providedEmail && isValidEmail(providedEmail)) {
-    console.log(`Using provided email: ${providedEmail}`);
     return { email: providedEmail, source: "provided", isValid: true };
   }
 
@@ -36,12 +35,9 @@ async function determineUserEmail(
     });
 
     if (existingLead?.email && isValidEmail(existingLead.email)) {
-      console.log(`Found existing valid email: ${existingLead.email}`);
       return { email: existingLead.email, source: "existing", isValid: true };
     }
-  } catch (leadSearchError) {
-    console.log("Could not search for existing lead:", leadSearchError);
-  }
+  } catch (leadSearchError) {}
 
   return { email: null, source: "none", isValid: false };
 }
@@ -105,8 +101,6 @@ export async function POST(req: NextRequest) {
     }
 
     let reportData;
-
-    console.log("NODE_ENV:", process.env.NODE_ENV);
 
     if (false) {
       const response = await axios.get(
@@ -201,13 +195,6 @@ export async function POST(req: NextRequest) {
         response.email_status_message = "Please provide an email address to receive your detailed report";
       }
 
-      console.log(`Email determination result:`, {
-        email: emailResult.email ? `${emailResult.email.substring(0, 3)}***` : "none",
-        source: emailResult.source,
-        isValid: emailResult.isValid,
-        canSendImmediate: response.can_send_immediate_email,
-      });
-
       const structuredReportData = {
         zip_code: zipCode,
         water_system_name: waterSystemName,
@@ -235,17 +222,16 @@ export async function POST(req: NextRequest) {
         })),
       };
 
-      // TODO: Re-enable database storage once schema is synced with the database
-      // const waterReport = await prisma.contaminant_Mapping.create({
-      //   data: {
-      //     pws_id: pws_id,
-      //     zip_code: structuredReportData.zip_code,
-      //     water_system_name: waterSystemName,
-      //     detected_patriots_count: detectedPatriotsCount,
-      //     report_data: structuredReportData,
-      //     klaviyo_event_sent: false,
-      //   },
-      // });
+      const waterReport = await prisma.contaminant_Mapping.create({
+        data: {
+          pws_id: pws_id,
+          zip_code: structuredReportData.zip_code,
+          water_system_name: waterSystemName,
+          detected_patriots_count: detectedPatriotsCount,
+          report_data: structuredReportData,
+          klaviyo_event_sent: false,
+        },
+      });
 
       const tempReportId = `${Date.now()}_${pws_id}`;
 
@@ -268,7 +254,6 @@ export async function POST(req: NextRequest) {
                   created_at: new Date(),
                 },
               });
-              console.log(`Saved/updated email in leads table: ${emailResult.email}`);
             } catch (leadSaveError) {
               console.warn("Could not save lead to database:", leadSaveError);
             }
@@ -334,13 +319,10 @@ export async function POST(req: NextRequest) {
 
           await eventsApi.createEvent(eventPayload);
 
-          // TODO: Re-enable database update once schema is synced
-          // await prisma.contaminant_Mapping.update({
-          //   where: { id: tempReportId },
-          //   data: { klaviyo_event_sent: true },
-          // });
-
-          console.log("Water report event sent to Klaviyo successfully");
+          await prisma.contaminant_Mapping.update({
+            where: { id: waterReport.id },
+            data: { klaviyo_event_sent: true },
+          });
         } catch (klaviyoError: any) {
           console.error("Error sending event to Klaviyo:", klaviyoError);
           if (klaviyoError.response) {
