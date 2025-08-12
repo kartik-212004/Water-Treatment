@@ -13,12 +13,12 @@ CREATE TABLE "public"."leads" (
 -- CreateTable
 CREATE TABLE "public"."contaminant_mapping" (
     "id" TEXT NOT NULL,
-    "patriot_name" TEXT NOT NULL,
-    "wqp_characteristic_name" TEXT NOT NULL,
-    "removal_percentage" TEXT NOT NULL,
-    "health_risk_blurb" TEXT NOT NULL,
-    "health_guideline_ppb" DOUBLE PRECISION NOT NULL,
-    "legal_limit_ppb" DOUBLE PRECISION NOT NULL,
+    "pws_id" TEXT NOT NULL,
+    "zip_code" TEXT,
+    "water_system_name" TEXT,
+    "detected_patriots_count" INTEGER NOT NULL,
+    "report_data" JSONB NOT NULL,
+    "klaviyo_event_sent" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "contaminant_mapping_pkey" PRIMARY KEY ("id")
 );
