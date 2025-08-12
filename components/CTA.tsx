@@ -3,6 +3,12 @@ import { CheckCircle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
+const CTA_LIST = [
+  { title: "Targets priority contaminants identified in this report", icon: CheckCircle },
+  { title: "Advanced Nanomesh™ multi‑stage reduction technology", icon: CheckCircle },
+  { title: "Independent lab verified performance", icon: CheckCircle },
+];
+
 export default function CTA() {
   return (
     <Card className="mb-10 overflow-hidden rounded-none border-0 bg-[#101935] text-white shadow-sm sm:rounded-xl">
@@ -11,18 +17,12 @@ export default function CTA() {
           <div className="flex-1 space-y-4 text-center md:text-left">
             <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">Protect Your Drinking Water</h2>
             <ul className="space-y-2 text-sm text-white/80">
-              <li className="flex items-start gap-2">
-                <CheckCircle className="mt-0.5 h-4 w-4 text-[#FFC400]" />
-                <span>Targets priority contaminants identified in this report</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="mt-0.5 h-4 w-4 text-[#FFC400]" />
-                <span>Advanced Nanomesh™ multi‑stage reduction technology</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="mt-0.5 h-4 w-4 text-[#FFC400]" />
-                <span>Independent lab verified performance</span>
-              </li>
+              {CTA_LIST.map((e, i) => (
+                <li className="flex items-start gap-2">
+                  <e.icon className="mt-0.5 h-4 w-4 text-[#FFC400]" />
+                  <span className="text-left">{e.title}</span>
+                </li>
+              ))}
             </ul>
           </div>
           <div className="flex flex-col items-center gap-4 md:items-end">

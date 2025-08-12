@@ -148,11 +148,15 @@ function ReportContent() {
             <h1 className="max-w-3xl text-3xl font-semibold leading-tight text-white md:text-4xl lg:text-5xl">
               Personalized Water Quality Report
             </h1>
-            <div className="max-w-2xl text-sm font-medium text-white/70">
-              Service Area: <span className="text-white">{zipCode}</span> · Priority contaminants detected:{" "}
-              <span className="font-medium text-red-400">{detectedPatriotsCount}</span>
-              {"  "}
-              <Badge className="rounded-md bg-white/10 text-white ring-1 ring-inset ring-white/20">
+            <div className="flex max-w-2xl flex-col space-y-1 text-sm font-medium text-white/70">
+              <div>
+                Service Area: <span className="text-white">{zipCode}</span>
+              </div>
+              <div>
+                Priority contaminants detected:{" "}
+                <span className="font-medium text-red-400">{detectedPatriotsCount}</span>
+              </div>
+              <Badge className="max-w-20 rounded-md bg-white/10 text-white ring-1 ring-inset ring-white/20">
                 {new Date(reportData.generated_at).toLocaleDateString("en-US", {
                   month: "short",
                   year: "numeric",
