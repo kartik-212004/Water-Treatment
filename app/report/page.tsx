@@ -192,7 +192,7 @@ function ReportContent() {
 
   return (
     <div className="relative m-0 min-h-screen bg-white pb-12">
-      <div className="mx-auto max-w-7xl py-2">
+      <div className="mx-auto max-w-7xl py-0 sm:py-2">
         <div className="relative mb-8 overflow-hidden border-b border-gray-200 bg-[#101935] px-6 py-10 shadow-sm sm:rounded-none">
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center space-x-3">

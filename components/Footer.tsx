@@ -4,7 +4,7 @@ import { CheckCircle, Droplets, Shield } from "lucide-react";
 
 export default function Footer() {
   return (
-    <div className="bg-gradient-to-r from-[#101935] via-blue-950 to-[#101935] px-4 py-8 text-center text-white">
+    <div className="bg-[#101935] px-4 py-8 text-center text-white">
       <div className="mx-auto max-w-6xl space-y-6">
         <p className="text-xs font-medium uppercase tracking-wider sm:text-sm md:text-base">
           +18000 HOMEOWNERS USE 4PATRIOTS FOR THEIR WATER SAFETY
