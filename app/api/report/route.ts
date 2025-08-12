@@ -222,13 +222,22 @@ export async function POST(req: NextRequest) {
         })),
       };
 
-      // Manually emulate an upsert (composite unique to be enforced after migration)
-      let waterReport = await prisma.contaminant_Mapping.findFirst({
-        where: { pws_id: pws_id, zip_code: structuredReportData.zip_code },
-      });
-      if (!waterReport) {
-        waterReport = await prisma.contaminant_Mapping.create({
-          data: {
+      // Atomic upsert using composite unique constraint to avoid race duplicates
+      let waterReport;
+      try {
+        waterReport = await prisma.contaminant_Mapping.upsert({
+          where: {
+            // Prisma will generate where input as pws_id_zip_code because of @@unique([pws_id, zip_code])
+            pws_id_zip_code: {
+              pws_id: pws_id,
+              zip_code: structuredReportData.zip_code,
+            },
+          },
+          update: {
+            detected_patriots_count: detectedPatriotsCount,
+            report_data: structuredReportData,
+          },
+          create: {
             pws_id: pws_id,
             zip_code: structuredReportData.zip_code,
             water_system_name: waterSystemName,
@@ -237,14 +246,49 @@ export async function POST(req: NextRequest) {
             klaviyo_event_sent: false,
           },
         });
-      } else {
-        waterReport = await prisma.contaminant_Mapping.update({
-          where: { id: waterReport.id },
-          data: {
-            detected_patriots_count: detectedPatriotsCount,
-            report_data: structuredReportData,
-          },
-        });
+      } catch (e: any) {
+        // In case client types not regenerated yet or race leading to P2002, fallback to fetch existing
+        if (e.code === "P2002") {
+          waterReport = await prisma.contaminant_Mapping.findFirst({
+            where: { pws_id: pws_id, zip_code: structuredReportData.zip_code },
+          });
+        } else if (e.message?.includes("Unknown arg pws_id_zip_code")) {
+          // Types not regenerated: fallback to find/update logic
+          let existing = await prisma.contaminant_Mapping.findFirst({
+            where: { pws_id: pws_id, zip_code: structuredReportData.zip_code },
+          });
+          if (!existing) {
+            try {
+              existing = await prisma.contaminant_Mapping.create({
+                data: {
+                  pws_id: pws_id,
+                  zip_code: structuredReportData.zip_code,
+                  water_system_name: waterSystemName,
+                  detected_patriots_count: detectedPatriotsCount,
+                  report_data: structuredReportData,
+                  klaviyo_event_sent: false,
+                },
+              });
+            } catch (inner: any) {
+              if (inner.code === "P2002") {
+                existing = await prisma.contaminant_Mapping.findFirst({
+                  where: { pws_id: pws_id, zip_code: structuredReportData.zip_code },
+                });
+              } else throw inner;
+            }
+          } else {
+            existing = await prisma.contaminant_Mapping.update({
+              where: { id: existing.id },
+              data: {
+                detected_patriots_count: detectedPatriotsCount,
+                report_data: structuredReportData,
+              },
+            });
+          }
+          waterReport = existing;
+        } else {
+          throw e;
+        }
       }
 
       const tempReportId = `${Date.now()}_${pws_id}`;
@@ -332,7 +376,7 @@ export async function POST(req: NextRequest) {
           };
 
           // Only send Klaviyo event once per mapping record
-          if (!waterReport.klaviyo_event_sent) {
+          if (waterReport && !waterReport.klaviyo_event_sent) {
             await eventsApi.createEvent(eventPayload);
             await prisma.contaminant_Mapping.update({
               where: { id: waterReport.id },

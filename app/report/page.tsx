@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef } from "react";
 
 import axios from "axios";
 import { ArrowLeft, Droplets, AlertTriangle, CheckCircle, Info } from "lucide-react";
@@ -68,13 +68,18 @@ function ReportContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchedRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (pwsid) {
-      fetchReportData(pwsid);
-    } else {
+    if (!pwsid) {
       setError("No PWSID provided");
       setLoading(false);
+      return;
     }
+    // Avoid duplicate POSTs (React StrictMode double invoke or rapid param changes)
+    if (fetchedRef.current === pwsid) return;
+    fetchedRef.current = pwsid;
+    fetchReportData(pwsid);
   }, [pwsid]);
 
   const fetchReportData = async (pwsid: string) => {
