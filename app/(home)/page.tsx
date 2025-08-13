@@ -248,14 +248,14 @@ export default function WaterQualityReport() {
                         className="text-[11px] font-semibold uppercase tracking-wide text-black md:text-sm">
                         Select Your Water Provider *
                       </Label>
-                      <div className="relative">
+                      <div className="relative w-full">
                         <Droplets className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400 md:left-4 md:h-5 md:w-5" />
                         <Select
                           value={selectedPwsid}
                           onValueChange={handleWaterSystemSelect}
                           disabled={isSelectDisabled}>
                           <SelectTrigger
-                            className={`h-10 rounded-lg border-2 pl-9 text-base transition-all duration-200 md:h-14 md:rounded-xl md:pl-12 md:text-lg ${
+                            className={`h-10 w-full rounded-lg border-2 pl-9 text-left text-base transition-all duration-200 md:h-14 md:rounded-xl md:pl-12 md:text-lg ${
                               errors.waterSystem
                                 ? "border-red-500 focus:border-red-500"
                                 : "border-gray-200 focus:border-black"
@@ -275,10 +275,15 @@ export default function WaterQualityReport() {
                           {waterSystems.length > 0 && (
                             <SelectContent>
                               {waterSystems.map((system) => (
-                                <SelectItem key={system.pwsid} value={system.pwsid}>
-                                  <div className="flex flex-col">
-                                    <span className="text-start text-sm">{system.pws_name}</span>
-                                    <span className="text-xs text-gray-500">
+                                <SelectItem
+                                  key={system.pwsid}
+                                  value={system.pwsid}
+                                  className="whitespace-normal">
+                                  <div className="flex max-w-[calc(100vw-5rem)] flex-col sm:max-w-sm">
+                                    <span className="line-clamp-1 break-words text-start text-sm font-medium">
+                                      {system.pws_name}
+                                    </span>
+                                    <span className="line-clamp-2 break-words text-xs text-gray-500">
                                       {system.pwsid} • Serves{" "}
                                       {system.population_served_count?.toLocaleString()} people
                                       {system.city_name && ` • ${system.city_name}`}

@@ -31,12 +31,3 @@ model Contaminant_Mapping {
   @@map("contaminant_mapping")
   @@unique([pws_id, zip_code])
 }
-
-model RateLimit {
-  id          String @id @default(uuid())
-  key         String @unique
-  count       Int
-  lastRequest BigInt
-
-  @@map("rateLimit")
-}

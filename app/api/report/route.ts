@@ -222,12 +222,10 @@ export async function POST(req: NextRequest) {
         })),
       };
 
-      // Atomic upsert using composite unique constraint to avoid race duplicates
       let waterReport;
       try {
         waterReport = await prisma.contaminant_Mapping.upsert({
           where: {
-            // Prisma will generate where input as pws_id_zip_code because of @@unique([pws_id, zip_code])
             pws_id_zip_code: {
               pws_id: pws_id,
               zip_code: structuredReportData.zip_code,
@@ -235,14 +233,14 @@ export async function POST(req: NextRequest) {
           },
           update: {
             detected_patriots_count: detectedPatriotsCount,
-            report_data: structuredReportData,
+            report_data: structuredReportData.contaminants,
           },
           create: {
             pws_id: pws_id,
             zip_code: structuredReportData.zip_code,
             water_system_name: waterSystemName,
             detected_patriots_count: detectedPatriotsCount,
-            report_data: structuredReportData,
+            report_data: structuredReportData.contaminants,
             klaviyo_event_sent: false,
           },
         });
@@ -265,7 +263,7 @@ export async function POST(req: NextRequest) {
                   zip_code: structuredReportData.zip_code,
                   water_system_name: waterSystemName,
                   detected_patriots_count: detectedPatriotsCount,
-                  report_data: structuredReportData,
+                  report_data: structuredReportData.contaminants,
                   klaviyo_event_sent: false,
                 },
               });
@@ -281,7 +279,7 @@ export async function POST(req: NextRequest) {
               where: { id: existing.id },
               data: {
                 detected_patriots_count: detectedPatriotsCount,
-                report_data: structuredReportData,
+                report_data: structuredReportData.contaminants,
               },
             });
           }
