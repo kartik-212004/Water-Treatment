@@ -6,7 +6,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "4Patriots",
-  description: "4Patriots",
+  description:
+    "Find out what’s in your drinking water & how to fix it. Instant report reveals contaminants in your area & Patriot Pure®’s proven removal rates.",
 };
 
 export default function RootLayout({
