@@ -94,7 +94,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Zip code is required" }, { status: 400 });
     }
 
-    // Determine the email to use
     const emailResult = await determineUserEmail(pws_id, email);
 
     if (!emailResult.email || !emailResult.isValid) {
@@ -212,8 +211,9 @@ export async function POST(req: NextRequest) {
       };
 
       let waterReport;
+      let isNewReport = false;
       try {
-        waterReport = await prisma.contaminant_Mapping.upsert({
+        const existingReport = await prisma.contaminant_Mapping.findUnique({
           where: {
             pws_id_zip_code_email: {
               pws_id: pws_id,
@@ -221,27 +221,49 @@ export async function POST(req: NextRequest) {
               email: emailResult.email!,
             },
           },
-          update: {
-            detected_patriots_count: detectedPatriotsCount,
-            report_data: structuredReportData.contaminants,
-            klaviyo_event_sent: false, // Reset to false for new submissions
-          },
-          create: {
-            pws_id: pws_id,
-            zip_code: structuredReportData.zip_code,
-            water_system_name: waterSystemName,
-            email: emailResult.email!,
-            detected_patriots_count: detectedPatriotsCount,
-            report_data: structuredReportData.contaminants,
-            klaviyo_event_sent: false,
-          },
         });
+
+        if (existingReport) {
+          const currentDataString = JSON.stringify(structuredReportData.contaminants);
+          const existingDataString = JSON.stringify(existingReport.report_data);
+
+          if (currentDataString !== existingDataString) {
+            waterReport = await prisma.contaminant_Mapping.update({
+              where: { id: existingReport.id },
+              data: {
+                detected_patriots_count: detectedPatriotsCount,
+                report_data: structuredReportData.contaminants,
+                klaviyo_event_sent: false,
+              },
+            });
+            isNewReport = true;
+          } else {
+            // Data hasn't changed, just return existing report
+            waterReport = existingReport;
+            isNewReport = false;
+          }
+        } else {
+          // New report
+          waterReport = await prisma.contaminant_Mapping.create({
+            data: {
+              pws_id: pws_id,
+              zip_code: structuredReportData.zip_code,
+              water_system_name: waterSystemName,
+              email: emailResult.email!,
+              detected_patriots_count: detectedPatriotsCount,
+              report_data: structuredReportData.contaminants,
+              klaviyo_event_sent: false,
+            },
+          });
+          isNewReport = true;
+        }
       } catch (e: any) {
-        // In case client types not regenerated yet or race leading to P2002, fallback to fetch existing
+        // Fallback error handling
         if (e.code === "P2002") {
           waterReport = await prisma.contaminant_Mapping.findFirst({
             where: { pws_id: pws_id, zip_code: structuredReportData.zip_code, email: emailResult.email! },
           });
+          isNewReport = false;
         } else if (e.message?.includes("Unknown arg pws_id_zip_code_email")) {
           let existing = await prisma.contaminant_Mapping.findFirst({
             where: { pws_id: pws_id, zip_code: structuredReportData.zip_code, email: emailResult.email! },
@@ -259,6 +281,7 @@ export async function POST(req: NextRequest) {
                   klaviyo_event_sent: false,
                 },
               });
+              isNewReport = true;
             } catch (inner: any) {
               if (inner.code === "P2002") {
                 existing = await prisma.contaminant_Mapping.findFirst({
@@ -268,17 +291,26 @@ export async function POST(req: NextRequest) {
                     email: emailResult.email!,
                   },
                 });
+                isNewReport = false;
               } else throw inner;
             }
           } else {
-            existing = await prisma.contaminant_Mapping.update({
-              where: { id: existing.id },
-              data: {
-                detected_patriots_count: detectedPatriotsCount,
-                report_data: structuredReportData.contaminants,
-                klaviyo_event_sent: false, // Reset to false for new submissions
-              },
-            });
+            const currentDataString = JSON.stringify(structuredReportData.contaminants);
+            const existingDataString = JSON.stringify(existing.report_data);
+
+            if (currentDataString !== existingDataString) {
+              existing = await prisma.contaminant_Mapping.update({
+                where: { id: existing.id },
+                data: {
+                  detected_patriots_count: detectedPatriotsCount,
+                  report_data: structuredReportData.contaminants,
+                  klaviyo_event_sent: false, // Reset only when data changes
+                },
+              });
+              isNewReport = true;
+            } else {
+              isNewReport = false;
+            }
           }
           waterReport = existing;
         } else {
@@ -372,8 +404,8 @@ export async function POST(req: NextRequest) {
             },
           };
 
-          // Send Klaviyo event for each user interaction, regardless of previous events
-          if (waterReport) {
+          // Send Klaviyo event only for new reports or when data changes and hasn't been sent yet
+          if (waterReport && isNewReport && !waterReport.klaviyo_event_sent) {
             await eventsApi.createEvent(eventPayload);
             // Update the flag to indicate event was sent
             await prisma.contaminant_Mapping.update({
