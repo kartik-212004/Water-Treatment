@@ -19,22 +19,13 @@ CREATE TABLE "public"."contaminant_mapping" (
     "detected_patriots_count" INTEGER NOT NULL,
     "report_data" JSONB NOT NULL,
     "klaviyo_event_sent" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "contaminant_mapping_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."rateLimit" (
-    "id" TEXT NOT NULL,
-    "key" TEXT NOT NULL,
-    "count" INTEGER NOT NULL,
-    "lastRequest" BIGINT NOT NULL,
-
-    CONSTRAINT "rateLimit_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
 CREATE UNIQUE INDEX "leads_email_key" ON "public"."leads"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "rateLimit_key_key" ON "public"."rateLimit"("key");
+CREATE UNIQUE INDEX "contaminant_mapping_pws_id_zip_code_key" ON "public"."contaminant_mapping"("pws_id", "zip_code");
