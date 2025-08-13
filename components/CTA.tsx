@@ -11,7 +11,7 @@ const CTA_LIST = [
 
 export default function CTA() {
   return (
-    <Card className="mb-10 overflow-hidden rounded-none border-0 bg-[#101935] text-white shadow-sm sm:rounded-xl">
+    <Card className="mb-10 overflow-hidden rounded-none border-0 bg-[#101935] text-white shadow-sm sm:rounded-sm">
       <CardContent className="px-6 py-10 md:px-12">
         <div className="mx-auto flex max-w-4xl flex-col items-center gap-8 md:flex-row md:items-start md:justify-between">
           <div className="flex-1 space-y-4 text-center md:text-left">

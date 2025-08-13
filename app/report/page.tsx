@@ -290,7 +290,7 @@ function ReportContent() {
 
         <CTA />
 
-        <Card className="rounded-none border border-gray-200 bg-gray-50 shadow-sm sm:rounded-b-none sm:rounded-t-2xl">
+        <Card className="rounded-none border border-gray-200 bg-gray-50 shadow-sm sm:rounded-b-none sm:rounded-t-sm">
           <CardContent className="p-6">
             <p className="text-center text-sm text-gray-600">
               <Info className="mr-1 inline h-4 w-4" />
