@@ -20,6 +20,7 @@ CREATE TABLE "public"."contaminant_mapping" (
     "report_data" JSONB NOT NULL,
     "klaviyo_event_sent" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "email" TEXT NOT NULL,
 
     CONSTRAINT "contaminant_mapping_pkey" PRIMARY KEY ("id")
 );
@@ -28,4 +29,4 @@ CREATE TABLE "public"."contaminant_mapping" (
 CREATE UNIQUE INDEX "leads_email_key" ON "public"."leads"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "contaminant_mapping_pws_id_zip_code_key" ON "public"."contaminant_mapping"("pws_id", "zip_code");
+CREATE UNIQUE INDEX "contaminant_mapping_pws_id_zip_code_email_key" ON "public"."contaminant_mapping"("pws_id", "zip_code", "email");

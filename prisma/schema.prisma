@@ -5,7 +5,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // directUrl = env("DIRECT_URL")
 }
 
 model leads {
@@ -26,7 +25,8 @@ model Contaminant_Mapping {
   report_data             Json
   klaviyo_event_sent      Boolean  @default(false)
   created_at              DateTime @default(now())
+  email                   String
 
-  @@unique([pws_id, zip_code])
+  @@unique([pws_id, zip_code, email])
   @@map("contaminant_mapping")
 }

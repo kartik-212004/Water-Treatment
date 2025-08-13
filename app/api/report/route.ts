@@ -90,11 +90,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "PWSID is required" }, { status: 400 });
     }
 
-    if (email && !isValidEmail(email)) {
+    if (!zipCode) {
+      return NextResponse.json({ error: "Zip code is required" }, { status: 400 });
+    }
+
+    // Determine the email to use
+    const emailResult = await determineUserEmail(pws_id, email);
+
+    if (!emailResult.email || !emailResult.isValid) {
       return NextResponse.json(
         {
-          error: "Invalid email format provided",
-          details: "Please provide a valid email address",
+          error: "Valid email is required",
+          details: "Please provide a valid email address to generate your water report",
         },
         { status: 400 }
       );
@@ -163,37 +170,19 @@ export async function POST(req: NextRequest) {
       detectedPatriotsCount,
       pws_id: pws_id,
       generated_at: new Date().toISOString(),
-      email_captured: false,
-      requires_email_capture: true,
-      email_source: "none" as "provided" | "existing" | "none",
-      email_valid: false,
-      can_send_immediate_email: false,
-      email_status_message: "",
+      email_captured: true,
+      requires_email_capture: false,
+      email_source: emailResult.source,
+      email_valid: emailResult.isValid,
+      can_send_immediate_email: true,
+      email_status_message:
+        emailResult.source === "provided"
+          ? "Report will be sent to the provided email address"
+          : "Report will be sent to your previously used email address",
     };
 
     try {
       const waterSystemName = reportData.results || "Unknown Water System";
-
-      const emailResult = await determineUserEmail(pws_id, email);
-
-      response.email_captured = !!emailResult.email;
-      response.requires_email_capture = !emailResult.email;
-      response.email_source = emailResult.source;
-      response.email_valid = emailResult.isValid;
-      response.can_send_immediate_email = !!emailResult.email;
-
-      if (emailResult.email) {
-        switch (emailResult.source) {
-          case "provided":
-            response.email_status_message = "Report will be sent to the provided email address";
-            break;
-          case "existing":
-            response.email_status_message = "Report will be sent to your previously used email address";
-            break;
-        }
-      } else {
-        response.email_status_message = "Please provide an email address to receive your detailed report";
-      }
 
       const structuredReportData = {
         zip_code: zipCode,
@@ -226,19 +215,22 @@ export async function POST(req: NextRequest) {
       try {
         waterReport = await prisma.contaminant_Mapping.upsert({
           where: {
-            pws_id_zip_code: {
+            pws_id_zip_code_email: {
               pws_id: pws_id,
               zip_code: structuredReportData.zip_code,
+              email: emailResult.email!,
             },
           },
           update: {
             detected_patriots_count: detectedPatriotsCount,
             report_data: structuredReportData.contaminants,
+            klaviyo_event_sent: false, // Reset to false for new submissions
           },
           create: {
             pws_id: pws_id,
             zip_code: structuredReportData.zip_code,
             water_system_name: waterSystemName,
+            email: emailResult.email!,
             detected_patriots_count: detectedPatriotsCount,
             report_data: structuredReportData.contaminants,
             klaviyo_event_sent: false,
@@ -248,12 +240,11 @@ export async function POST(req: NextRequest) {
         // In case client types not regenerated yet or race leading to P2002, fallback to fetch existing
         if (e.code === "P2002") {
           waterReport = await prisma.contaminant_Mapping.findFirst({
-            where: { pws_id: pws_id, zip_code: structuredReportData.zip_code },
+            where: { pws_id: pws_id, zip_code: structuredReportData.zip_code, email: emailResult.email! },
           });
-        } else if (e.message?.includes("Unknown arg pws_id_zip_code")) {
-          // Types not regenerated: fallback to find/update logic
+        } else if (e.message?.includes("Unknown arg pws_id_zip_code_email")) {
           let existing = await prisma.contaminant_Mapping.findFirst({
-            where: { pws_id: pws_id, zip_code: structuredReportData.zip_code },
+            where: { pws_id: pws_id, zip_code: structuredReportData.zip_code, email: emailResult.email! },
           });
           if (!existing) {
             try {
@@ -262,6 +253,7 @@ export async function POST(req: NextRequest) {
                   pws_id: pws_id,
                   zip_code: structuredReportData.zip_code,
                   water_system_name: waterSystemName,
+                  email: emailResult.email!,
                   detected_patriots_count: detectedPatriotsCount,
                   report_data: structuredReportData.contaminants,
                   klaviyo_event_sent: false,
@@ -270,7 +262,11 @@ export async function POST(req: NextRequest) {
             } catch (inner: any) {
               if (inner.code === "P2002") {
                 existing = await prisma.contaminant_Mapping.findFirst({
-                  where: { pws_id: pws_id, zip_code: structuredReportData.zip_code },
+                  where: {
+                    pws_id: pws_id,
+                    zip_code: structuredReportData.zip_code,
+                    email: emailResult.email!,
+                  },
                 });
               } else throw inner;
             }
@@ -280,6 +276,7 @@ export async function POST(req: NextRequest) {
               data: {
                 detected_patriots_count: detectedPatriotsCount,
                 report_data: structuredReportData.contaminants,
+                klaviyo_event_sent: false, // Reset to false for new submissions
               },
             });
           }
@@ -307,6 +304,7 @@ export async function POST(req: NextRequest) {
                 },
                 update: {
                   pwsid: pws_id,
+                  zip_code: structuredReportData.zip_code,
                   created_at: new Date(),
                 },
               });
@@ -363,19 +361,21 @@ export async function POST(req: NextRequest) {
                           email: emailResult.email,
                         }
                       : {
-                          email: `anonymous+${tempReportId}@waterreport.local`,
+                          // Use a temporary identifier when no email is provided
+                          external_id: `anonymous_${pws_id}_${Date.now()}`,
                         },
                   },
                 },
                 time: new Date(),
-                unique_id: `water_report_${tempReportId}`,
+                unique_id: `water_report_${tempReportId}_${emailResult.email || "anonymous"}`,
               },
             },
           };
 
-          // Only send Klaviyo event once per mapping record
-          if (waterReport && !waterReport.klaviyo_event_sent) {
+          // Send Klaviyo event for each user interaction, regardless of previous events
+          if (waterReport) {
             await eventsApi.createEvent(eventPayload);
+            // Update the flag to indicate event was sent
             await prisma.contaminant_Mapping.update({
               where: { id: waterReport.id },
               data: { klaviyo_event_sent: true },
