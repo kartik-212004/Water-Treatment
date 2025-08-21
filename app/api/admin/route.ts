@@ -24,7 +24,6 @@ interface RequestBody {
 export async function POST(req: NextRequest) {
   const body: RequestBody = await req.json();
 
-  // Check if this is a login request
   if (body.admin && body.password) {
     console.log("Login attempt:", {
       admin: body.admin,

@@ -34,6 +34,7 @@ export default function AdminLogin() {
         toast("Login successful!");
         router.push("/admin/dashboard");
       } else {
+        alert(response.data);
         toast("Login Failed", { description: response.data.message || "Invalid credentials" });
       }
     } catch (error: any) {
