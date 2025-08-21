@@ -27,9 +27,11 @@ export default function AdminLogin() {
 
     try {
       const response = await axios.post("/api/admin", { admin, password });
+      console.log(response);
 
       if (response.statusText == "OK") {
         localStorage.setItem("adminToken", response.data.token);
+
         router.push("/admin/dashboard");
       } else {
         toast("Login Failed");
