@@ -29,7 +29,7 @@ export default function AdminLogin() {
       const response = await axios.post("/api/admin", { admin, password });
       console.log(response);
 
-      if (response.status == 200) {
+      if (response.data.status == 200) {
         localStorage.setItem("adminToken", response.data.token);
 
         router.push("/admin/dashboard");
