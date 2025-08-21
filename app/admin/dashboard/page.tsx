@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 import axios from "axios";
-import { Loader2, Plus, Trash2, Save, LogOut, Beaker } from "lucide-react";
+import { Loader2, Plus, Trash2, Save, LogOut, Beaker, Edit, X, Check } from "lucide-react";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -31,6 +31,8 @@ export default function AdminDashboard() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [existingContaminants, setExistingContaminants] = useState<Contaminant[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Contaminant>({ name: "", removalRate: "", healthRisk: "" });
   const router = useRouter();
 
   useEffect(() => {
@@ -47,14 +49,15 @@ export default function AdminDashboard() {
   const fetchContaminants = async () => {
     try {
       const token = localStorage.getItem("adminToken");
-      const response = await axios.get("/api/admin/contaminants", {
+      const response = await axios.get("/api/admin", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log(response);
 
       if (response.status === 200) {
-        setExistingContaminants(response.data.contaminants || []);
+        setExistingContaminants(response.data.data || []);
       }
     } catch (error) {
       console.error("Failed to fetch contaminants:", error);
@@ -120,7 +123,7 @@ export default function AdminDashboard() {
     try {
       const token = localStorage.getItem("adminToken");
       const response = await axios.post(
-        "/api/admin/contaminants",
+        "/api/admin",
         { contaminants },
         {
           headers: {
@@ -142,6 +145,71 @@ export default function AdminDashboard() {
       toast("Failed to save contaminants");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleEdit = (contaminant: Contaminant) => {
+    setEditingId(contaminant.id!);
+    setEditForm({ ...contaminant });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditForm({ name: "", removalRate: "", healthRisk: "" });
+  };
+
+  const handleUpdateContaminant = async () => {
+    if (!editForm.name.trim() || !editForm.removalRate.trim() || !editForm.healthRisk.trim()) {
+      toast("All fields are required");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("adminToken");
+      const response = await axios.put(
+        `/api/admin`,
+        { contaminant: editForm },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        toast("Contaminant updated successfully");
+        setEditingId(null);
+        setEditForm({ name: "", removalRate: "", healthRisk: "" });
+        fetchContaminants();
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || "Failed to update contaminant";
+      toast(errorMessage);
+    }
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete "${name}"?`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("adminToken");
+      const response = await axios.delete(`/api/admin`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        data: { id },
+      });
+
+      if (response.status === 200) {
+        toast("Contaminant deleted successfully");
+        fetchContaminants();
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || "Failed to delete contaminant";
+      toast(errorMessage);
     }
   };
 
@@ -270,19 +338,88 @@ export default function AdminDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="max-h-96 space-y-2 overflow-y-auto">
+                <div className="max-h-96 space-y-3 overflow-y-auto">
                   {existingContaminants.length === 0 ? (
                     <p className="py-4 text-center text-sm text-muted-foreground">No contaminants found</p>
                   ) : (
                     existingContaminants.map((contaminant) => (
                       <div key={contaminant.id} className="rounded-lg border p-3">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium">{contaminant.name}</h4>
-                          <Badge variant="outline">{contaminant.removalRate}</Badge>
-                        </div>
-                        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                          {contaminant.healthRisk}
-                        </p>
+                        {editingId === contaminant.id ? (
+                          // Edit form
+                          <div className="space-y-3">
+                            <div>
+                              <Label htmlFor={`edit-name-${contaminant.id}`} className="text-xs">
+                                Name
+                              </Label>
+                              <Input
+                                id={`edit-name-${contaminant.id}`}
+                                value={editForm.name}
+                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`edit-rate-${contaminant.id}`} className="text-xs">
+                                Removal Rate
+                              </Label>
+                              <Input
+                                id={`edit-rate-${contaminant.id}`}
+                                value={editForm.removalRate}
+                                onChange={(e) => setEditForm({ ...editForm, removalRate: e.target.value })}
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`edit-health-${contaminant.id}`} className="text-xs">
+                                Health Risk
+                              </Label>
+                              <Textarea
+                                id={`edit-health-${contaminant.id}`}
+                                value={editForm.healthRisk}
+                                onChange={(e) => setEditForm({ ...editForm, healthRisk: e.target.value })}
+                                rows={3}
+                                className="text-sm"
+                              />
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button size="sm" onClick={handleUpdateContaminant} className="h-7">
+                                <Check className="mr-1 h-3 w-3" />
+                                Save
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={handleCancelEdit} className="h-7">
+                                <X className="mr-1 h-3 w-3" />
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          // Display mode
+                          <>
+                            <div className="mb-2 flex items-center justify-between">
+                              <h4 className="font-medium">{contaminant.name}</h4>
+                              <div className="flex items-center space-x-2">
+                                <Badge variant="outline">{contaminant.removalRate}</Badge>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleEdit(contaminant)}
+                                  className="h-6 w-6 p-0">
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDelete(contaminant.id!, contaminant.name)}
+                                  className="h-6 w-6 p-0 text-destructive hover:text-destructive">
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                            <p className="line-clamp-2 text-xs text-muted-foreground">
+                              {contaminant.healthRisk}
+                            </p>
+                          </>
+                        )}
                       </div>
                     ))
                   )}
