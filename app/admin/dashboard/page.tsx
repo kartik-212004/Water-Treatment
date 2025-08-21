@@ -54,7 +54,6 @@ export default function AdminDashboard() {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(response);
 
       if (response.status === 200) {
         setExistingContaminants(response.data.data || []);
@@ -215,20 +214,16 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="border-b bg-[#101935] text-white">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="rounded-lg bg-primary p-2">
-                <Beaker className="h-5 w-5 text-primary-foreground" />
-              </div>
               <div>
                 <h1 className="text-xl font-bold">Admin Dashboard</h1>
-                <p className="text-sm text-muted-foreground">Manage contaminants database</p>
+                <p className="text-sm text-gray-300 text-muted-foreground">Manage contaminants database</p>
               </div>
             </div>
-            <Button variant="outline" onClick={handleLogout}>
+            <Button variant="outline" className="text-black" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </Button>
@@ -238,7 +233,6 @@ export default function AdminDashboard() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="grid gap-8 lg:grid-cols-3">
-          {/* Add Contaminants Form */}
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>

@@ -27,7 +27,6 @@ export default function AdminLogin() {
 
     try {
       const response = await axios.post("/api/admin", { admin, password });
-      console.log("Login response:", response);
 
       if (response.status === 200 && response.data.token) {
         localStorage.setItem("adminToken", response.data.token);

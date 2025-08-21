@@ -4,24 +4,13 @@ import bcrypt from "bcrypt";
 
 import prisma from "@/lib/prisma";
 
-// Simple token verification based on existing admin auth
 async function verifyToken(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return false;
   }
-
-  const token = authHeader.substring(7);
-  try {
-    // Simple verification - in a real app you'd want proper JWT
-    const expectedToken = await bcrypt.hash(`${process.env.ADMIN}${process.env.PASSWORD}`, 10);
-    return true; // Simplified for now - you could do more validation here
-  } catch (error) {
-    return false;
-  }
 }
 
-// GET - Fetch all contaminants
 export async function GET(req: NextRequest) {
   try {
     const isAuthorized = await verifyToken(req);
@@ -40,7 +29,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST - Add new contaminants
 export async function POST(req: NextRequest) {
   try {
     const isAuthorized = await verifyToken(req);
@@ -54,14 +42,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid contaminants data" }, { status: 400 });
     }
 
-    // Validate each contaminant
     for (const contaminant of contaminants) {
       if (!contaminant.name || !contaminant.removalRate || !contaminant.healthRisk) {
         return NextResponse.json({ error: "All fields are required for each contaminant" }, { status: 400 });
       }
     }
 
-    // Check for duplicates
     const existingNames = await prisma.contaminant.findMany({
       where: {
         name: {
@@ -78,7 +64,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create contaminants
     const result = await prisma.contaminant.createMany({
       data: contaminants.map((c: any) => ({
         name: c.name,
