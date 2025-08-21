@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
   // Check if this is a login request
   if (body.admin && body.password) {
     console.log(body, process.env.ADMIN, process.env.PASSWORD);
-    if (body.admin === process.env.ADMIN && body.password === process.env.PASSWORD) {
+    if (body.admin == process.env.ADMIN && body.password == process.env.PASSWORD) {
+      console.log("reached the status 200");
       const token = bcrypt.hash(`${body.admin}${body.password}`, 10);
       return NextResponse.json({ message: "Login successful", token: token }, { status: 200 });
     }
