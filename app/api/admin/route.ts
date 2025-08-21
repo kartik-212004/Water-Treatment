@@ -26,12 +26,31 @@ export async function POST(req: NextRequest) {
 
   // Check if this is a login request
   if (body.admin && body.password) {
-    console.log(body, process.env.ADMIN, process.env.PASSWORD);
-    if (body.admin == process.env.ADMIN && body.password == process.env.PASSWORD) {
-      console.log("reached the status 200");
-      const token = bcrypt.hash(`${body.admin}${body.password}`, 10);
-      return NextResponse.json({ message: "Login successful", token: token }, { status: 200 });
+    console.log("Login attempt:", {
+      admin: body.admin,
+      hasAdmin: !!process.env.ADMIN,
+      hasPassword: !!process.env.PASSWORD,
+    });
+
+    if (!process.env.ADMIN || !process.env.PASSWORD) {
+      console.error("Missing environment variables: ADMIN or PASSWORD not set");
+      return NextResponse.json({ message: "Server configuration error" }, { status: 500 });
     }
+
+    if (body.admin === process.env.ADMIN && body.password === process.env.PASSWORD) {
+      console.log("Login successful");
+      const token = await bcrypt.hash(`${body.admin}${body.password}`, 10);
+      return NextResponse.json(
+        {
+          message: "Login successful",
+          token: token,
+          status: 200,
+        },
+        { status: 200 }
+      );
+    }
+
+    console.log("Invalid credentials provided");
     return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
   }
 

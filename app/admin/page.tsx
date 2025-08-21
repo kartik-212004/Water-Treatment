@@ -27,17 +27,27 @@ export default function AdminLogin() {
 
     try {
       const response = await axios.post("/api/admin", { admin, password });
-      console.log(response);
+      console.log("Login response:", response);
 
-      if (response.data.status == 200) {
+      if (response.status === 200 && response.data.token) {
         localStorage.setItem("adminToken", response.data.token);
-
+        toast("Login successful!");
         router.push("/admin/dashboard");
       } else {
-        toast("Login Failed");
+        toast("Login Failed", { description: response.data.message || "Invalid credentials" });
       }
-    } catch (error) {
-      setError("Network error. Please try again.");
+    } catch (error: any) {
+      console.error("Login error:", error);
+      if (error.response) {
+        toast("Login Failed", {
+          description: error.response.data.message || "Invalid credentials",
+        });
+      } else {
+        toast("Login Failed", {
+          description: "Network error. Please try again.",
+        });
+      }
+      setError("Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
     }
