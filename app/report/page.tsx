@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense, useRef } from "react";
 
 import axios from "axios";
-import { ArrowLeft, Droplets, AlertTriangle, CheckCircle, Info } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CheckCircle, Info } from "lucide-react";
 
 import CTA from "@/components/CTA";
 import Loading from "@/components/Loading";

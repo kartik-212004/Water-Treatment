@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model leads {
@@ -30,3 +31,20 @@ model Contaminant_Mapping {
   @@unique([pws_id, zip_code, email])
   @@map("contaminant_mapping")
 }
+
+model contaminant {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  removalRate String
+  healthRisk  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// model admin {
+//   id        String   @id @default(uuid())
+//   email     String   @unique
+//   password  String
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+// }

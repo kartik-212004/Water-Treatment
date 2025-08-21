@@ -1,5 +1,4 @@
 export const PATRIOTS_CONTAMINANTS = {
-  // Heavy Metals
   Arsenic: {
     removalRate: "99.9%",
     healthRisk:
