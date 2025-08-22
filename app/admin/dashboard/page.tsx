@@ -36,7 +36,6 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check authentication
     const token = localStorage.getItem("adminToken");
     if (!token) {
       toast("Please login to access admin dashboard");
@@ -322,7 +321,6 @@ export default function AdminDashboard() {
             </Card>
           </div>
 
-          {/* Existing Contaminants List */}
           <div>
             <Card>
               <CardHeader>
@@ -339,7 +337,6 @@ export default function AdminDashboard() {
                     existingContaminants.map((contaminant) => (
                       <div key={contaminant.id} className="rounded-lg border p-3">
                         {editingId === contaminant.id ? (
-                          // Edit form
                           <div className="space-y-3">
                             <div>
                               <Label htmlFor={`edit-name-${contaminant.id}`} className="text-xs">
@@ -387,7 +384,6 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                         ) : (
-                          // Display mode
                           <>
                             <div className="mb-2 flex items-center justify-between">
                               <h4 className="font-medium">{contaminant.name}</h4>
