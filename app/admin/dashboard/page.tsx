@@ -4,16 +4,26 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 import axios from "axios";
-import { Loader2, Plus, Trash2, Save, LogOut, Beaker, Edit, X, Check } from "lucide-react";
+import { Loader2, Plus, Trash2, Save, LogOut, Beaker, Edit, X, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
+
+import ContaminantsNames from "@/lib/contaminants";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 
 interface Contaminant {
@@ -31,9 +41,15 @@ export default function AdminDashboard() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [existingContaminants, setExistingContaminants] = useState<Contaminant[]>([]);
+  const [loadingExisting, setLoadingExisting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Contaminant>({ name: "", removalRate: "", healthRisk: "" });
+  const [openComboboxes, setOpenComboboxes] = useState<{ [key: string]: boolean }>({});
+  const [editComboboxOpen, setEditComboboxOpen] = useState(false);
   const router = useRouter();
+
+  // Remove duplicates from ContaminantsNames to avoid key conflicts
+  const uniqueContaminants = Array.from(new Set(ContaminantsNames));
 
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
@@ -46,6 +62,7 @@ export default function AdminDashboard() {
   }, [router]);
 
   const fetchContaminants = async () => {
+    setLoadingExisting(true);
     try {
       const token = localStorage.getItem("adminToken");
       const response = await axios.get("/api/admin", {
@@ -60,6 +77,8 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error("Failed to fetch contaminants:", error);
       toast("Failed to load contaminants");
+    } finally {
+      setLoadingExisting(false);
     }
   };
 
@@ -263,12 +282,49 @@ export default function AdminDashboard() {
 
                     <div className="space-y-2">
                       <Label htmlFor={`name-${index}`}>Contaminant Name</Label>
-                      <Input
-                        id={`name-${index}`}
-                        placeholder="e.g., Arsenic"
-                        value={contaminant.name}
-                        onChange={(e) => updateContaminant(index, "name", e.target.value)}
-                      />
+                      <Popover
+                        open={openComboboxes[`add-${index}`]}
+                        onOpenChange={(open) =>
+                          setOpenComboboxes({ ...openComboboxes, [`add-${index}`]: open })
+                        }>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={openComboboxes[`add-${index}`]}
+                            className="h-10 w-full justify-between text-sm">
+                            {contaminant.name
+                              ? uniqueContaminants.find((name) => name === contaminant.name)
+                              : "e.g., Arsenic"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[400px] p-0">
+                          <Command>
+                            <CommandInput placeholder="Search contaminants..." />
+                            <CommandList>
+                              <CommandEmpty>No contaminant found.</CommandEmpty>
+                              <CommandGroup>
+                                {uniqueContaminants.map((name: string, idx: number) => (
+                                  <CommandItem
+                                    key={`${name}-${idx}`}
+                                    value={name}
+                                    onSelect={(currentValue) => {
+                                      updateContaminant(
+                                        index,
+                                        "name",
+                                        currentValue === contaminant.name ? "" : currentValue
+                                      );
+                                      setOpenComboboxes({ ...openComboboxes, [`add-${index}`]: false });
+                                    }}>
+                                    {name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
                     <div className="space-y-2">
@@ -331,7 +387,11 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="max-h-96 space-y-3 overflow-y-auto">
-                  {existingContaminants.length === 0 ? (
+                  {loadingExisting ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : existingContaminants.length === 0 ? (
                     <p className="py-4 text-center text-sm text-muted-foreground">No contaminants found</p>
                   ) : (
                     existingContaminants.map((contaminant) => (
@@ -342,12 +402,44 @@ export default function AdminDashboard() {
                               <Label htmlFor={`edit-name-${contaminant.id}`} className="text-xs">
                                 Name
                               </Label>
-                              <Input
-                                id={`edit-name-${contaminant.id}`}
-                                value={editForm.name}
-                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                className="h-8 text-sm"
-                              />
+                              <Popover open={editComboboxOpen} onOpenChange={setEditComboboxOpen}>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={editComboboxOpen}
+                                    className="h-8 w-full justify-between text-sm">
+                                    {editForm.name
+                                      ? uniqueContaminants.find((name) => name === editForm.name)
+                                      : "Select name"}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[400px] p-0">
+                                  <Command>
+                                    <CommandInput placeholder="Search contaminants..." />
+                                    <CommandList>
+                                      <CommandEmpty>No contaminant found.</CommandEmpty>
+                                      <CommandGroup>
+                                        {uniqueContaminants.map((name: string, idx: number) => (
+                                          <CommandItem
+                                            key={`edit-${name}-${idx}`}
+                                            value={name}
+                                            onSelect={(currentValue) => {
+                                              setEditForm({
+                                                ...editForm,
+                                                name: currentValue === editForm.name ? "" : currentValue,
+                                              });
+                                              setEditComboboxOpen(false);
+                                            }}>
+                                            {name}
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
                             </div>
                             <div>
                               <Label htmlFor={`edit-rate-${contaminant.id}`} className="text-xs">
