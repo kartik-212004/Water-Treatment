@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
 
     let reportData;
 
-    if (false) {
+    if (true) {
       const response = await axios.get(
         `https://api.gosimplelab.com/api/utilities/results?pws_id=${pws_id}&result_type=mixed`,
         {
