@@ -234,14 +234,16 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="border-b bg-[#101935] text-white">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center space-x-3">
               <div>
-                <h1 className="text-xl font-bold">Admin Dashboard</h1>
-                <p className="text-sm text-gray-300 text-muted-foreground">Manage contaminants database</p>
+                <h1 className="text-lg font-bold sm:text-xl">Admin Dashboard</h1>
+                <p className="text-xs text-gray-300 text-muted-foreground sm:text-sm">
+                  Manage contaminants database
+                </p>
               </div>
             </div>
-            <Button variant="outline" className="text-black" onClick={handleLogout}>
+            <Button variant="outline" className="w-fit text-black" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </Button>
@@ -249,30 +251,32 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid gap-8 lg:grid-cols-3">
+      <div className="container mx-auto px-4 py-4 sm:py-8">
+        <div className="grid gap-4 sm:gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex flex-col gap-2 text-base sm:flex-row sm:items-center sm:text-lg">
                   <Plus className="h-5 w-5" />
                   <span>Add New Contaminants</span>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm">
                   Add one or more contaminants to the Patriots filtration database
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4 sm:space-y-6">
                 {message.text && (
                   <Alert variant={message.type === "error" ? "destructive" : "default"}>
-                    <AlertDescription>{message.text}</AlertDescription>
+                    <AlertDescription className="text-sm">{message.text}</AlertDescription>
                   </Alert>
                 )}
 
                 {contaminants.map((contaminant, index) => (
-                  <div key={index} className="space-y-4 rounded-lg border p-4">
+                  <div key={index} className="space-y-3 rounded-lg border p-3 sm:space-y-4 sm:p-4">
                     <div className="flex items-center justify-between">
-                      <Badge variant="secondary">Contaminant {index + 1}</Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        Contaminant {index + 1}
+                      </Badge>
                       {contaminants.length > 1 && (
                         <Button variant="ghost" size="sm" onClick={() => removeContaminantField(index)}>
                           <Trash2 className="h-4 w-4" />
@@ -299,10 +303,14 @@ export default function AdminDashboard() {
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[400px] p-0">
+                        <PopoverContent
+                          className="w-[90vw] max-w-[400px] p-0"
+                          side="bottom"
+                          align="start"
+                          sideOffset={5}>
                           <Command>
-                            <CommandInput placeholder="Search contaminants..." />
-                            <CommandList>
+                            <CommandInput placeholder="Search contaminants..." className="h-9" />
+                            <CommandList className="max-h-[40vh]">
                               <CommandEmpty>No contaminant found.</CommandEmpty>
                               <CommandGroup>
                                 {uniqueContaminants.map((name: string, idx: number) => (
@@ -350,25 +358,28 @@ export default function AdminDashboard() {
                   </div>
                 ))}
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <Button
                     variant="outline"
                     onClick={addContaminantField}
-                    className="flex items-center space-x-2">
+                    className="flex w-full items-center justify-center space-x-2 sm:w-auto">
                     <Plus className="h-4 w-4" />
-                    <span>Add Another Contaminant</span>
+                    <span className="text-sm">Add Another Contaminant</span>
                   </Button>
 
-                  <Button onClick={handleSave} disabled={saving} className="flex items-center space-x-2">
+                  <Button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="flex w-full items-center justify-center space-x-2 sm:w-auto">
                     {saving ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Saving...</span>
+                        <span className="text-sm">Saving...</span>
                       </>
                     ) : (
                       <>
                         <Save className="h-4 w-4" />
-                        <span>Save All</span>
+                        <span className="text-sm">Save All</span>
                       </>
                     )}
                   </Button>
@@ -377,16 +388,16 @@ export default function AdminDashboard() {
             </Card>
           </div>
 
-          <div>
+          <div className="mt-6 lg:mt-0">
             <Card>
-              <CardHeader>
-                <CardTitle>Existing Contaminants</CardTitle>
-                <CardDescription>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base sm:text-lg">Existing Contaminants</CardTitle>
+                <CardDescription className="text-sm">
                   Currently tracked contaminants ({existingContaminants.length})
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="max-h-96 space-y-3 overflow-y-auto">
+                <div className="max-h-[50vh] space-y-2 overflow-y-auto sm:space-y-3 lg:max-h-96">
                   {loadingExisting ? (
                     <div className="flex justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -395,9 +406,9 @@ export default function AdminDashboard() {
                     <p className="py-4 text-center text-sm text-muted-foreground">No contaminants found</p>
                   ) : (
                     existingContaminants.map((contaminant) => (
-                      <div key={contaminant.id} className="rounded-lg border p-3">
+                      <div key={contaminant.id} className="rounded-lg border p-2 sm:p-3">
                         {editingId === contaminant.id ? (
-                          <div className="space-y-3">
+                          <div className="space-y-2 sm:space-y-3">
                             <div>
                               <Label htmlFor={`edit-name-${contaminant.id}`} className="text-xs">
                                 Name
@@ -415,10 +426,14 @@ export default function AdminDashboard() {
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                   </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-[400px] p-0">
+                                <PopoverContent
+                                  className="w-[90vw] max-w-[400px] p-0"
+                                  side="bottom"
+                                  align="start"
+                                  sideOffset={5}>
                                   <Command>
-                                    <CommandInput placeholder="Search contaminants..." />
-                                    <CommandList>
+                                    <CommandInput placeholder="Search contaminants..." className="h-9" />
+                                    <CommandList className="max-h-[40vh]">
                                       <CommandEmpty>No contaminant found.</CommandEmpty>
                                       <CommandGroup>
                                         {uniqueContaminants.map((name: string, idx: number) => (
@@ -464,23 +479,34 @@ export default function AdminDashboard() {
                                 className="text-sm"
                               />
                             </div>
-                            <div className="flex space-x-2">
-                              <Button size="sm" onClick={handleUpdateContaminant} className="h-7">
+                            <div className="flex flex-col gap-2 sm:flex-row">
+                              <Button
+                                size="sm"
+                                onClick={handleUpdateContaminant}
+                                className="h-7 flex-1 sm:flex-none">
                                 <Check className="mr-1 h-3 w-3" />
-                                Save
+                                <span className="text-xs">Save</span>
                               </Button>
-                              <Button size="sm" variant="outline" onClick={handleCancelEdit} className="h-7">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={handleCancelEdit}
+                                className="h-7 flex-1 sm:flex-none">
                                 <X className="mr-1 h-3 w-3" />
-                                Cancel
+                                <span className="text-xs">Cancel</span>
                               </Button>
                             </div>
                           </div>
                         ) : (
                           <>
-                            <div className="mb-2 flex items-center justify-between">
-                              <h4 className="font-medium">{contaminant.name}</h4>
-                              <div className="flex items-center space-x-2">
-                                <Badge variant="outline">{contaminant.removalRate}</Badge>
+                            <div className="mb-2 flex items-start justify-between gap-2">
+                              <h4 className="truncate text-sm font-medium sm:text-base">
+                                {contaminant.name}
+                              </h4>
+                              <div className="flex flex-shrink-0 items-center gap-1">
+                                <Badge variant="outline" className="px-1 text-xs">
+                                  {contaminant.removalRate}
+                                </Badge>
                                 <Button
                                   size="sm"
                                   variant="ghost"
@@ -497,7 +523,7 @@ export default function AdminDashboard() {
                                 </Button>
                               </div>
                             </div>
-                            <p className="line-clamp-2 text-xs text-muted-foreground">
+                            <p className="line-clamp-2 text-xs text-muted-foreground sm:text-sm">
                               {contaminant.healthRisk}
                             </p>
                           </>
