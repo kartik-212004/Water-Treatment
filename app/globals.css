@@ -90,3 +90,7 @@
     @apply bg-background font-satoshi-medium text-foreground;
   }
 }
+
+@theme {
+  --color-brandblue: #101935;
+}

@@ -31,3 +31,13 @@ model Contaminant_Mapping {
   @@unique([pws_id, zip_code, email])
   @@map("contaminant_mapping")
 }
+
+model contaminant {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  removalRate String
+  healthRisk  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+

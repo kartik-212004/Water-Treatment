@@ -5,8 +5,18 @@ import fs from "fs";
 import { ApiKeySession, EventsApi, ProfilesApi } from "klaviyo-api";
 import path from "path";
 
-import { PATRIOTS_CONTAMINANTS } from "@/lib/constants";
 import prisma from "@/lib/prisma";
+
+interface PATRIOTS_CONTAMINANTS_TYPE {
+  id: string;
+  name: string;
+  removalRate: string;
+  healthRisk: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+let PATRIOTS_CONTAMINANTS: PATRIOTS_CONTAMINANTS_TYPE[];
 
 const session = new ApiKeySession(process.env.KLAVIYO_API_KEY || "");
 const eventsApi = new EventsApi(session);
@@ -14,6 +24,10 @@ const eventsApi = new EventsApi(session);
 function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
+}
+
+async function getContaminants() {
+  PATRIOTS_CONTAMINANTS = await prisma.contaminant.findMany({});
 }
 
 async function determineUserEmail(
@@ -84,6 +98,9 @@ interface ProcessedContaminant extends ContaminantData {
 
 export async function POST(req: NextRequest) {
   try {
+    // Fetch contaminants from database at the start of each request
+    await getContaminants();
+
     const { pws_id, email, zipCode }: RequestBody = await req.json();
 
     if (!pws_id) {
@@ -126,7 +143,7 @@ export async function POST(req: NextRequest) {
     }
 
     const allPatriotsContaminants = reportData.data.filter((item: ContaminantData) => {
-      return Object.keys(PATRIOTS_CONTAMINANTS).includes(item.name);
+      return PATRIOTS_CONTAMINANTS.some((contaminant) => contaminant.name === item.name);
     });
 
     const prioritizedContaminants = allPatriotsContaminants
@@ -139,7 +156,7 @@ export async function POST(req: NextRequest) {
 
         const exceedanceRatio = healthGuideline > 0 ? currentLevel / healthGuideline : 0;
 
-        const patriotData = PATRIOTS_CONTAMINANTS[item.name as keyof typeof PATRIOTS_CONTAMINANTS];
+        const patriotData = PATRIOTS_CONTAMINANTS.find((contaminant) => contaminant.name === item.name);
 
         return {
           ...item,
@@ -148,7 +165,10 @@ export async function POST(req: NextRequest) {
           healthGuideline,
           exceedanceRatio,
           priority: isDetected ? exceedanceRatio : 0,
-          patriotData,
+          patriotData: {
+            removalRate: patriotData?.removalRate || "N/A",
+            healthRisk: patriotData?.healthRisk || "No data available",
+          },
         };
       })
       .sort((a: ProcessedContaminant, b: ProcessedContaminant) => {

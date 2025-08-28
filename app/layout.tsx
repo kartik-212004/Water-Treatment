@@ -5,9 +5,10 @@ import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"),
   title: "4Patriots",
   description:
-    "Find out what’s in your drinking water & how to fix it. Instant report reveals contaminants in your area & Patriot Pure®’s proven removal rates.",
+    "Find out what's in your drinking water & how to fix it. Instant report reveals contaminants in your area & Patriot Pure®'s proven removal rates.",
 };
 
 export default function RootLayout({
