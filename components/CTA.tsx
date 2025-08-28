@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { CheckCircle, ExternalLink } from "lucide-react";
@@ -24,7 +25,7 @@ export default function CTA() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImage((prev) => (prev + 1) % CTA_IMAGES.length);
-    }, 3500); // 3.5 seconds per image
+    }, 3500);
     return () => clearInterval(interval);
   }, []);
 
@@ -52,18 +53,14 @@ export default function CTA() {
             </ul>
           </div>
           <div className="flex flex-col items-center gap-4 md:items-end">
-            <Button
-              size="lg"
-              className="bg-yellow-400 px-10 py-5 text-base font-semibold text-[#101935] shadow-lg hover:bg-yellow-400/90"
-              onClick={() =>
-                window.open(
-                  "https://4patriots.com/product/patriot-pure-ultimate-water-filtration-system-nanomesh-filter",
-                  "_blank"
-                )
-              }>
-              View Filter Details
-              <ExternalLink className="ml-2 h-5 w-5" />
-            </Button>
+            <Link target="_target" href="https://products.4patriots.com/purify/megaflow/ultra-fast-solution">
+              <Button
+                size="lg"
+                className="bg-yellow-400 px-10 py-5 text-base font-semibold text-[#101935] shadow-lg hover:bg-yellow-400/90">
+                View Filter Details
+                <ExternalLink className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
             <p className="text-[11px] uppercase tracking-wide text-white drop-shadow">Limited Inventory</p>
           </div>
         </div>
