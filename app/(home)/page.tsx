@@ -126,7 +126,6 @@ export default function WaterQualityReport() {
     }
   };
 
-  // Ref to keep track of current fetch abort controller
   const fetchAbortRef = useRef<AbortController | null>(null);
 
   const handleInputChange = (field: string, value: string | boolean) => {
