@@ -132,7 +132,9 @@ function ReportContent() {
         <div className="relative overflow-hidden border-b border-gray-200 bg-[#101935] px-6 py-10 shadow-sm sm:rounded-none">
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center space-x-3">
-              <Image src="/logo.webp" width={200} height={100} alt="Logo" />
+              <Link target="_blank" href="https://4patriots.com/">
+                <Image src="/logo.webp" width={200} height={100} alt="Logo" />
+              </Link>
             </div>
             <div className="flex items-center gap-3">
               <Link href="/" className="hidden sm:inline-block">
