@@ -10,7 +10,9 @@ export default function Header() {
     <section className="relative mx-auto max-w-2xl border-b border-gray-200 bg-[#101935] px-6 py-12 text-white">
       <div className="mx-auto max-w-4xl">
         <div className="mb-6 flex items-center justify-between">
-          <img src="/logo.webp" alt="4Patriots" className="h-12 w-auto" />
+          <Link href="https://4patriots.com/">
+            <img src="/logo.webp" alt="4Patriots" className="h-12 w-auto" />
+          </Link>
           <Link href={"/admin"}>
             <Button variant={"ghost"} className="font-medium" title="Admin">
               <User /> Admin
