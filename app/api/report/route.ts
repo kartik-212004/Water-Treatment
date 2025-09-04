@@ -6,6 +6,7 @@ import { ApiKeySession, EventsApi, ProfilesApi } from "klaviyo-api";
 import path from "path";
 
 import prisma from "@/lib/prisma";
+import { withRateLimit } from "@/lib/simple-rate-limit";
 
 interface PATRIOTS_CONTAMINANTS_TYPE {
   id: string;
@@ -96,7 +97,7 @@ interface ProcessedContaminant extends ContaminantData {
   };
 }
 
-export async function POST(req: NextRequest) {
+async function handleReportRequest(req: NextRequest): Promise<Response> {
   try {
     // Fetch contaminants from database at the start of each request
     await getContaminants();
@@ -125,7 +126,7 @@ export async function POST(req: NextRequest) {
 
     let reportData;
 
-    if (true) {
+    if (false) {
       const response = await axios.get(
         `https://api.gosimplelab.com/api/utilities/results?pws_id=${pws_id}&result_type=mixed`,
         {
@@ -453,3 +454,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to fetch report data" }, { status: 500 });
   }
 }
+
+// Export POST handler with rate limiting (10 requests per minute per IP)
+export const POST = withRateLimit(handleReportRequest, {
+  maxRequests: 5,
+  windowMs: 60 * 1000, // 1 minute
+});
