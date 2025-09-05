@@ -5,16 +5,16 @@ import fs from "fs";
 import { ApiKeySession, EventsApi, ProfilesApi } from "klaviyo-api";
 import path from "path";
 
-import prisma from "@/lib/prisma";
-
-interface PATRIOTS_CONTAMINANTS_TYPE {
-  id: string;
-  name: string;
-  removalRate: string;
-  healthRisk: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import {
+  prisma,
+  PATRIOTS_CONTAMINANTS_TYPE,
+  ReportRequestBody,
+  ContaminantData,
+  ProcessedContaminant,
+  EmailResult,
+  StructuredReportData,
+  KlaviyoEventPayload,
+} from "@/lib";
 
 let PATRIOTS_CONTAMINANTS: PATRIOTS_CONTAMINANTS_TYPE[];
 
@@ -30,10 +30,7 @@ async function getContaminants() {
   PATRIOTS_CONTAMINANTS = await prisma.contaminant.findMany({});
 }
 
-async function determineUserEmail(
-  pws_id: string,
-  providedEmail?: string
-): Promise<{ email: string | null; source: "provided" | "existing" | "none"; isValid: boolean }> {
+async function determineUserEmail(pws_id: string, providedEmail?: string): Promise<EmailResult> {
   if (providedEmail && isValidEmail(providedEmail)) {
     return { email: providedEmail, source: "provided", isValid: true };
   }
@@ -56,52 +53,12 @@ async function determineUserEmail(
   return { email: null, source: "none", isValid: false };
 }
 
-interface RequestBody {
-  pws_id: string;
-  email?: string;
-  zipCode: string;
-}
-
-interface ContaminantData {
-  name: string;
-  category: string;
-  cas: string;
-  unit: string;
-  type: string;
-  sub_type: string;
-  median: number | null;
-  average: number | null;
-  detection_rate: string;
-  reduced_data_quality: boolean;
-  sources: string;
-  health_effects: string;
-  aesthetic_effects: string;
-  description: string;
-  body_effects: string[];
-  slr: number | null;
-  fed_mcl: number | null;
-  fed_mclg: number | null;
-  max: number | null;
-}
-
-interface ProcessedContaminant extends ContaminantData {
-  isDetected: boolean;
-  currentLevel: number;
-  healthGuideline: number;
-  exceedanceRatio: number;
-  priority: number;
-  patriotData: {
-    removalRate: string;
-    healthRisk: string;
-  };
-}
-
 export async function POST(req: NextRequest) {
   try {
     // Fetch contaminants from database at the start of each request
     await getContaminants();
 
-    const { pws_id, email, zipCode }: RequestBody = await req.json();
+    const { pws_id, email, zipCode }: ReportRequestBody = await req.json();
 
     if (!pws_id) {
       return NextResponse.json({ error: "PWSID is required" }, { status: 400 });
@@ -125,7 +82,7 @@ export async function POST(req: NextRequest) {
 
     let reportData;
 
-    if (true) {
+    if (false) {
       const response = await axios.get(
         `https://api.gosimplelab.com/api/utilities/results?pws_id=${pws_id}&result_type=mixed`,
         {

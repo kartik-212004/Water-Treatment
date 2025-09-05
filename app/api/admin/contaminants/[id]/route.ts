@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import bcrypt from "bcrypt";
 
-import prisma from "@/lib/prisma";
+import { prisma, ContaminantRouteParams, ContaminantUpdateData } from "@/lib";
 
 // Simple token verification based on existing admin auth
 async function verifyToken(request: NextRequest) {
@@ -21,7 +21,7 @@ async function verifyToken(request: NextRequest) {
 }
 
 // PUT - Update contaminant
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: ContaminantRouteParams) {
   try {
     const isAuthorized = await verifyToken(req);
     if (!isAuthorized) {
@@ -29,7 +29,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     const { id } = params;
-    const { name, removalRate, healthRisk } = await req.json();
+    const { name, removalRate, healthRisk }: ContaminantUpdateData = await req.json();
 
     if (!name || !removalRate || !healthRisk) {
       return NextResponse.json({ error: "All fields are required" }, { status: 400 });
@@ -77,7 +77,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 // DELETE - Delete contaminant
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: ContaminantRouteParams) {
   try {
     const decoded = verifyToken(req);
     if (!decoded) {
