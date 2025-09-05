@@ -166,7 +166,6 @@ async function handleFormSubmission(req: NextRequest): Promise<Response> {
   }
 }
 
-// Export POST handler with rate limiting (20 requests per minute per IP)
 export const POST = withRateLimit(handleFormSubmission, {
   maxRequests: 7,
   windowMs: 60 * 1000, // 1 minute

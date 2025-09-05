@@ -28,7 +28,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
   }
 
-  // Check if this is a contaminants request
   if (body.contaminants) {
     const authHeader = req.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -36,7 +35,6 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      // Add multiple contaminants
       const createdContaminants = await Promise.all(
         body.contaminants.map((contaminant: { name: string; removalRate: string; healthRisk: string }) =>
           prisma.contaminant.create({

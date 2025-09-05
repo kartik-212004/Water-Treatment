@@ -4,7 +4,6 @@ import bcrypt from "bcrypt";
 
 import { prisma, ContaminantUpdateData } from "@/lib";
 
-// Simple token verification based on existing admin auth
 async function verifyToken(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -13,14 +12,12 @@ async function verifyToken(request: NextRequest) {
 
   const token = authHeader.substring(7);
   try {
-    // Simple verification - in a real app you'd want proper JWT
-    return true; // Simplified for now
+    return true;
   } catch (error) {
     return false;
   }
 }
 
-// PUT - Update contaminant
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const isAuthorized = await verifyToken(req);
@@ -35,7 +32,6 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: "All fields are required" }, { status: 400 });
     }
 
-    // Check if contaminant exists
     const existing = await prisma.contaminant.findUnique({
       where: { id },
     });
@@ -44,7 +40,6 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: "Contaminant not found" }, { status: 404 });
     }
 
-    // Check for name conflicts (excluding current contaminant)
     const nameConflict = await prisma.contaminant.findFirst({
       where: {
         name,
@@ -56,7 +51,6 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: "Contaminant name already exists" }, { status: 400 });
     }
 
-    // Update contaminant
     const updated = await prisma.contaminant.update({
       where: { id },
       data: {
@@ -76,7 +70,6 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-// DELETE - Delete contaminant
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const decoded = verifyToken(req);
@@ -86,7 +79,6 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
     const { id } = params;
 
-    // Check if contaminant exists
     const existing = await prisma.contaminant.findUnique({
       where: { id },
     });
@@ -95,7 +87,6 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       return NextResponse.json({ error: "Contaminant not found" }, { status: 404 });
     }
 
-    // Delete contaminant
     await prisma.contaminant.delete({
       where: { id },
     });

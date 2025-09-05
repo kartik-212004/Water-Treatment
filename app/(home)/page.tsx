@@ -131,19 +131,16 @@ export default function WaterQualityReport() {
 
   const handleInputChange = (field: string, value: string | boolean) => {
     if (field === "zipCode" && typeof value === "string") {
-      // Sanitize: digits only, max 5 chars
       const cleaned = value.replace(/\D/g, "").slice(0, 5);
       setFormData((prev) => ({ ...prev, zipCode: cleaned }));
       setSelectedPwsid("");
       if (errors.zipCode) setErrors((prev) => ({ ...prev, zipCode: "" }));
-      // Don't immediately fetch here (debounced effect will handle it)
       return;
     }
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
-  // Debounced fetch when ZIP becomes 5 digits
   useEffect(() => {
     const zip = formData.zipCode;
     if (zip.length !== 5) {

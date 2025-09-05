@@ -48,7 +48,6 @@ export default function AdminDashboard() {
   const [editComboboxOpen, setEditComboboxOpen] = useState(false);
   const router = useRouter();
 
-  // Remove duplicates from ContaminantsNames to avoid key conflicts
   const uniqueContaminants = Array.from(new Set(ContaminantsNames));
 
   useEffect(() => {
@@ -109,14 +108,12 @@ export default function AdminDashboard() {
         return "All fields are required for each contaminant";
       }
 
-      // Check for duplicates in the form
       const duplicateInForm =
         contaminants.filter((c) => c.name.toLowerCase() === contaminant.name.toLowerCase()).length > 1;
       if (duplicateInForm) {
         return `Duplicate contaminant name: ${contaminant.name}`;
       }
 
-      // Check against existing contaminants
       const existsInDb = existingContaminants.some(
         (existing) => existing.name.toLowerCase() === contaminant.name.toLowerCase()
       );
@@ -154,7 +151,7 @@ export default function AdminDashboard() {
         setMessage({ type: "success", text: `Successfully added ${contaminants.length} contaminant(s)` });
         setContaminants([{ name: "", removalRate: "", healthRisk: "" }]);
         toast(`Successfully added ${contaminants.length} contaminant(s)`);
-        fetchContaminants(); // Refresh the list
+        fetchContaminants();
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || "Failed to save contaminants";

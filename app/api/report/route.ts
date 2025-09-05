@@ -55,7 +55,6 @@ async function determineUserEmail(pws_id: string, providedEmail?: string): Promi
 
 export async function POST(req: NextRequest) {
   try {
-    // Fetch contaminants from database at the start of each request
     await getContaminants();
 
     const { pws_id, email, zipCode }: ReportRequestBody = await req.json();
@@ -215,12 +214,10 @@ export async function POST(req: NextRequest) {
             });
             isNewReport = true;
           } else {
-            // Data hasn't changed, just return existing report
             waterReport = existingReport;
             isNewReport = false;
           }
         } else {
-          // New report
           waterReport = await prisma.contaminant_Mapping.create({
             data: {
               pws_id: pws_id,
@@ -235,7 +232,6 @@ export async function POST(req: NextRequest) {
           isNewReport = true;
         }
       } catch (e: any) {
-        // Fallback error handling
         if (e.code === "P2002") {
           waterReport = await prisma.contaminant_Mapping.findFirst({
             where: { pws_id: pws_id, zip_code: structuredReportData.zip_code, email: emailResult.email! },
@@ -370,7 +366,6 @@ export async function POST(req: NextRequest) {
                           email: emailResult.email,
                         }
                       : {
-                          // Use a temporary identifier when no email is provided
                           external_id: `anonymous_${pws_id}_${Date.now()}`,
                         },
                   },
@@ -381,10 +376,8 @@ export async function POST(req: NextRequest) {
             },
           };
 
-          // Send Klaviyo event only for new reports or when data changes and hasn't been sent yet
           if (waterReport && isNewReport && !waterReport.klaviyo_event_sent) {
             await eventsApi.createEvent(eventPayload);
-            // Update the flag to indicate event was sent
             await prisma.contaminant_Mapping.update({
               where: { id: waterReport.id },
               data: { klaviyo_event_sent: true },

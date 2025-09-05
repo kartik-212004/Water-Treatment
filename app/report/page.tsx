@@ -76,7 +76,6 @@ function ReportContent() {
       setLoading(false);
       return;
     }
-    // Avoid duplicate POSTs (React StrictMode double invoke or rapid param changes)
     if (fetchedRef.current === pwsid) return;
     fetchedRef.current = pwsid;
     fetchReportData(pwsid);
