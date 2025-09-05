@@ -123,6 +123,7 @@ export default function WaterQualityReport() {
         });
       }
     } finally {
+      setIsSubmitting(false);
     }
   };
 

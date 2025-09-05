@@ -4,6 +4,7 @@ import { ApiKeySession, ProfileCreateQuery, ProfileEnum, ProfilesApi } from "kla
 
 import { FormSubmission, formSubmissionSchema } from "@/lib/form-schema";
 import prisma from "@/lib/prisma";
+import { withRateLimit } from "@/lib/rate-limit";
 
 const session = new ApiKeySession(process.env.KLAVIYO_API_KEY || "");
 const profilesApi = new ProfilesApi(session);
@@ -26,7 +27,7 @@ function formatPhoneNumber(phone: string | undefined | null): string | null {
   return null;
 }
 
-export async function POST(req: NextRequest) {
+async function handleFormSubmission(req: NextRequest): Promise<Response> {
   try {
     if (!process.env.KLAVIYO_API_KEY) {
       console.error("KLAVIYO_API_KEY environment variable is not set");
@@ -164,3 +165,9 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+// Export POST handler with rate limiting (20 requests per minute per IP)
+export const POST = withRateLimit(handleFormSubmission, {
+  maxRequests: 7,
+  windowMs: 60 * 1000, // 1 minute
+});
