@@ -1,10 +1,10 @@
-# 🌊 Water Treatment System - Water Quality Report Generator
+# Water Treatment System - Water Quality Report Generator
 
 A comprehensive Next.js application that generates detailed water quality
 reports for US water systems, helping users understand contaminants in their
 local water supply and promoting water filtration solutions.
 
-## 📖 Overview
+## Overview
 
 The Water Treatment System is a modern web application that:
 
@@ -25,9 +25,9 @@ contaminants, their health effects, and sources
   system analytics
 - **Email Integration**: Automated email campaigns through Klaviyo integration
 
-## 🎯 Key Features
+## Key Features
 
-### 🏠 **User-Facing Features**
+### **User-Facing Features**
 
 - **Water Quality Form**: Simple form to request water quality reports by zip
   code
@@ -37,14 +37,14 @@ contaminants, their health effects, and sources
 - **Mobile Responsive**: Optimized for all device sizes
 - **Real-time Validation**: Form validation with immediate feedback
 
-### 👨‍💼 **Admin Features**
+### **Admin Features**
 
 - **Secure Admin Panel**: Protected admin dashboard with authentication
 - **Lead Management**: View and manage collected user leads
 - **Analytics Dashboard**: Monitor system usage and report generation
 - **Data Export**: Export leads and analytics data
 
-### 🔧 **Technical Features**
+### **Technical Features**
 
 - **PostgreSQL Database**: Robust data storage with Prisma ORM
 - **API Rate Limiting**: Prevents abuse and ensures system stability
@@ -52,7 +52,7 @@ contaminants, their health effects, and sources
 - **Docker Support**: Easy deployment with Docker containers
 - **Type Safety**: Full TypeScript implementation
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```mermaid
 graph TB
@@ -90,7 +90,7 @@ graph TB
     end
 ```
 
-## 🔄 Sequence Diagrams
+## Sequence Diagrams
 
 ### Form Submission Flow
 
@@ -291,7 +291,7 @@ sequenceDiagram
   S-->>CLI: Database seeded successfully
 ```
 
-## 🗂️ Data Flow Architecture
+## Data Flow Architecture
 
 ```mermaid
 flowchart LR
@@ -325,7 +325,7 @@ flowchart LR
     end
 ```
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### **Frontend**
 
@@ -425,7 +425,7 @@ flowchart LR
 
 The application will be available at `http://localhost:3000`
 
-## 🔐 Environment Variables
+## Environment Variables
 
 | Variable          | Description                          | Required |
 | ----------------- | ------------------------------------ | -------- |
@@ -435,7 +435,7 @@ The application will be available at `http://localhost:3000`
 | `ADMIN_USERNAME`  | Admin panel username                 | ✅       |
 | `ADMIN_PASSWORD`  | Admin panel password                 | ✅       |
 
-## 📊 Database Schema
+## Database Schema
 
 ```mermaid
 erDiagram
@@ -472,7 +472,7 @@ erDiagram
     leads ||--o{ contaminant_mapping : "pwsid"
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Water-Treatment/
@@ -490,7 +490,7 @@ Water-Treatment/
 └── styles/                       # Global styles and fonts
 ```
 
-## 🎮 Usage
+## Usage
 
 ### For End Users
 
@@ -520,7 +520,7 @@ Water-Treatment/
    - View recent report requests
    - Analyze system usage
 
-## 🔒 Security Features
+## Security Features
 
 - **Rate Limiting**: Prevents API abuse and spam
 - **Input Validation**: Server-side validation with Zod schemas
@@ -528,7 +528,7 @@ Water-Treatment/
 - **Environment Variables**: Sensitive data protection
 - **SQL Injection Protection**: Prisma ORM query protection
 
-## 📈 Performance Optimizations
+## Performance Optimizations
 
 - **Static Generation**: Pre-built pages for better performance
 - **Image Optimization**: Next.js automatic image optimization
@@ -536,7 +536,7 @@ Water-Treatment/
 - **Caching**: Report caching to reduce API calls
 - **Code Splitting**: Automatic code splitting with Next.js
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -544,7 +544,7 @@ Water-Treatment/
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📞 Support
+## Support
 
 For support and questions:
 
@@ -552,9 +552,9 @@ For support and questions:
 - Contact the development team
 - Check the documentation in `FILES_DOCUMENTATION.md`
 
-## � Estimated Code Review Effort
+## Estimated Code Review Effort
 
-🎯 **5 (Very Complex)** | ⏱️ **~90-120 minutes**
+**5 (Very Complex)** | ⏱️ **~90-120 minutes**
 
 ### Complexity Breakdown:
 
