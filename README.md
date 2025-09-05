@@ -359,7 +359,7 @@ flowchart LR
 - **Husky** - Git hooks
 - **lint-staged** - Pre-commit linting
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
