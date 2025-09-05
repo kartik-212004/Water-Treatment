@@ -5,6 +5,8 @@ import fs from "fs";
 import { ApiKeySession, EventsApi, ProfilesApi } from "klaviyo-api";
 import path from "path";
 
+import { withRateLimit } from "@/lib/rate-limit";
+
 import {
   prisma,
   PATRIOTS_CONTAMINANTS_TYPE,
@@ -53,7 +55,7 @@ async function determineUserEmail(pws_id: string, providedEmail?: string): Promi
   return { email: null, source: "none", isValid: false };
 }
 
-export async function POST(req: NextRequest) {
+export async function handleReportRequest(req: NextRequest) {
   try {
     await getContaminants();
 
@@ -81,7 +83,7 @@ export async function POST(req: NextRequest) {
 
     let reportData;
 
-    if (false) {
+    if (true) {
       const response = await axios.get(
         `https://api.gosimplelab.com/api/utilities/results?pws_id=${pws_id}&result_type=mixed`,
         {
@@ -403,3 +405,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to fetch report data" }, { status: 500 });
   }
 }
+
+export const POST = withRateLimit(handleReportRequest, {
+  maxRequests: 5,
+  windowMs: 60 * 1000,
+});
