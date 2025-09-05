@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import bcrypt from "bcrypt";
 
-import prisma from "@/lib/prisma";
+import { prisma, ContaminantCreateInput } from "@/lib";
 
 async function verifyToken(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { contaminants } = await req.json();
+    const { contaminants }: { contaminants: ContaminantCreateInput[] } = await req.json();
 
     if (!contaminants || !Array.isArray(contaminants)) {
       return NextResponse.json({ error: "Invalid contaminants data" }, { status: 400 });
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     const existingNames = await prisma.contaminant.findMany({
       where: {
         name: {
-          in: contaminants.map((c: any) => c.name),
+          in: contaminants.map((c) => c.name),
         },
       },
       select: { name: true },
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await prisma.contaminant.createMany({
-      data: contaminants.map((c: any) => ({
+      data: contaminants.map((c) => ({
         name: c.name,
         removalRate: c.removalRate,
         healthRisk: c.healthRisk,

@@ -2,27 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 import bcrypt from "bcrypt";
 
-import prisma from "@/lib/prisma";
-
-interface RequestBody {
-  admin?: string | null;
-  password?: string | null;
-  contaminants?: Array<{
-    name: string;
-    removalRate: string;
-    healthRisk: string;
-  }>;
-  contaminant?: {
-    id?: string;
-    name: string;
-    removalRate: string;
-    healthRisk: string;
-  };
-  id?: string;
-}
+import { prisma, AdminRequestBody } from "@/lib";
 
 export async function POST(req: NextRequest) {
-  const body: RequestBody = await req.json();
+  const body: AdminRequestBody = await req.json();
 
   if (body.admin && body.password) {
     if (!process.env.ADMIN || !process.env.PASSWORD) {
@@ -55,7 +38,7 @@ export async function POST(req: NextRequest) {
     try {
       // Add multiple contaminants
       const createdContaminants = await Promise.all(
-        body.contaminants.map((contaminant) =>
+        body.contaminants.map((contaminant: { name: string; removalRate: string; healthRisk: string }) =>
           prisma.contaminant.create({
             data: {
               name: contaminant.name,
@@ -109,7 +92,7 @@ export async function PUT(req: NextRequest) {
   }
 
   try {
-    const body: RequestBody = await req.json();
+    const body: AdminRequestBody = await req.json();
 
     if (!body.contaminant || !body.contaminant.id) {
       return NextResponse.json({ error: "Contaminant data and ID required" }, { status: 400 });
@@ -150,7 +133,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    const body: RequestBody = await req.json();
+    const body: AdminRequestBody = await req.json();
 
     if (!body.id) {
       return NextResponse.json({ error: "Contaminant ID required" }, { status: 400 });

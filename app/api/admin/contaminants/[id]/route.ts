@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import bcrypt from "bcrypt";
 
-import prisma from "@/lib/prisma";
+import { prisma, ContaminantUpdateData } from "@/lib";
 
 // Simple token verification based on existing admin auth
 async function verifyToken(request: NextRequest) {
@@ -29,7 +29,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     const { id } = params;
-    const { name, removalRate, healthRisk } = await req.json();
+    const { name, removalRate, healthRisk }: ContaminantUpdateData = await req.json();
 
     if (!name || !removalRate || !healthRisk) {
       return NextResponse.json({ error: "All fields are required" }, { status: 400 });
