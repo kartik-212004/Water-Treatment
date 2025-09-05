@@ -6,7 +6,7 @@ import { ApiKeySession, EventsApi, ProfilesApi } from "klaviyo-api";
 import path from "path";
 
 import prisma from "@/lib/prisma";
-import { withRateLimit } from "@/lib/simple-rate-limit";
+import { withRateLimit } from "@/lib/rate-limit";
 
 interface PATRIOTS_CONTAMINANTS_TYPE {
   id: string;

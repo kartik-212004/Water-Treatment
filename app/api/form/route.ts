@@ -4,7 +4,7 @@ import { ApiKeySession, ProfileCreateQuery, ProfileEnum, ProfilesApi } from "kla
 
 import { FormSubmission, formSubmissionSchema } from "@/lib/form-schema";
 import prisma from "@/lib/prisma";
-import { withRateLimit } from "@/lib/simple-rate-limit";
+import { withRateLimit } from "@/lib/rate-limit";
 
 const session = new ApiKeySession(process.env.KLAVIYO_API_KEY || "");
 const profilesApi = new ProfilesApi(session);
