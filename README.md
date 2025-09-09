@@ -10,20 +10,10 @@ The Water Treatment System is a modern web application that:
 
 - **Analyzes Water Quality**: Generates detailed reports on water contaminants
   by zip code and Public Water System ID (PWSID)
-- **Educational Resource**: Provides com## 📄 License
 
 This project is proprietary software. All rights reserved.
 
 ---
-
-Built with ❤️ for cleaner, safer water for everyone. information about water
-contaminants, their health effects, and sources
-
-- **Lead Generation**: Captures user information for water filtration system
-  recommendations
-- **Admin Dashboard**: Provides administrative tools for monitoring leads and
-  system analytics
-- **Email Integration**: Automated email campaigns through Klaviyo integration
 
 ## Key Features
 
@@ -43,14 +33,6 @@ contaminants, their health effects, and sources
 - **Lead Management**: View and manage collected user leads
 - **Analytics Dashboard**: Monitor system usage and report generation
 - **Data Export**: Export leads and analytics data
-
-### **Technical Features**
-
-- **PostgreSQL Database**: Robust data storage with Prisma ORM
-- **API Rate Limiting**: Prevents abuse and ensures system stability
-- **Email Automation**: Klaviyo integration for marketing campaigns
-- **Docker Support**: Easy deployment with Docker containers
-- **Type Safety**: Full TypeScript implementation
 
 ## System Architecture
 
@@ -333,18 +315,12 @@ flowchart LR
 - **React 19.1.1** - UI library
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Styling framework
-- **Radix UI** - Accessible component primitives
-- **Lucide React** - Icon library
-- **React Hook Form** - Form management
-- **Zod** - Schema validation
 
 ### **Backend**
 
 - **Next.js API Routes** - Server-side API
 - **Prisma** - Database ORM
 - **PostgreSQL** - Primary database
-- **bcrypt** - Password hashing
-- **Axios** - HTTP client
 
 ### **External Services**
 
@@ -535,34 +511,3 @@ Water-Treatment/
 - **Database Indexing**: Optimized database queries
 - **Caching**: Report caching to reduce API calls
 - **Code Splitting**: Automatic code splitting with Next.js
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Support
-
-For support and questions:
-
-- Create an issue in the repository
-- Contact the development team
-- Check the documentation in `FILES_DOCUMENTATION.md`
-
-## Estimated Code Review Effort
-
-**5 (Very Complex)** | ⏱️ **~90-120 minutes**
-
-### Complexity Breakdown:
-
-- **Database Schema**: 3 interconnected tables with complex relationships
-- **API Endpoints**: 6+ routes with validation, rate limiting, and external
-  integrations
-- **External Integrations**: Klaviyo API, EPA data sources, email automation
-- **Form Processing**: Multi-step validation, water system selection, report
-  generation
-- **Admin Panel**: Authentication, dashboard analytics, lead management
-- **Real-time Features**: Rate limiting, caching, background processing
