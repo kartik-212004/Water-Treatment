@@ -452,18 +452,18 @@ erDiagram
 
 ```
 Water-Treatment/
-├── app/                          # Next.js App Router
+├── app/
 │   ├── (home)/                   # Home page group
 │   ├── admin/                    # Admin panel
 │   ├── api/                      # API routes
 │   └── report/                   # Report display page
-├── components/                   # Reusable UI components
+├── components/
 │   └── ui/                       # Shadcn/ui components
 ├── lib/                          # Utility libraries
 ├── prisma/                       # Database schema and migrations
 ├── public/                       # Static assets
 ├── script/                       # Database seeding scripts
-└── styles/                       # Global styles and fonts
+└── styles/
 ```
 
 ## Usage
@@ -491,11 +491,6 @@ Water-Treatment/
    - Navigate to `/admin`
    - Login with admin credentials
 
-2. **View Dashboard**
-   - Monitor lead generation statistics
-   - View recent report requests
-   - Analyze system usage
-
 ## Security Features
 
 - **Rate Limiting**: Prevents API abuse and spam
@@ -503,11 +498,3 @@ Water-Treatment/
 - **Admin Authentication**: Secure admin panel access
 - **Environment Variables**: Sensitive data protection
 - **SQL Injection Protection**: Prisma ORM query protection
-
-## Performance Optimizations
-
-- **Static Generation**: Pre-built pages for better performance
-- **Image Optimization**: Next.js automatic image optimization
-- **Database Indexing**: Optimized database queries
-- **Caching**: Report caching to reduce API calls
-- **Code Splitting**: Automatic code splitting with Next.js
