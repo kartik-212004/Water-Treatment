@@ -124,7 +124,6 @@ export default function WaterQualityReport() {
             <CardContent className="bg-white px-0 py-8 sm:p-8">
               <form action={submitForm} className="space-y-4">
                 <div className="space-y-6">
-                  {/* ZIP and Provider Picker (client-side UX) */}
                   <div className="space-y-3">
                     <Label
                       htmlFor="zipCode"
@@ -134,7 +133,6 @@ export default function WaterQualityReport() {
                     <WaterProviderPicker zipFieldName="zipCode" pwsidFieldName="pwsid" />
                   </div>
 
-                  {/* Email */}
                   <div className="space-y-3">
                     <Label
                       htmlFor="email"
@@ -154,7 +152,6 @@ export default function WaterQualityReport() {
                     </div>
                   </div>
 
-                  {/* Phone */}
                   <div className="space-y-3">
                     <Label
                       htmlFor="phoneNumber"
@@ -174,7 +171,6 @@ export default function WaterQualityReport() {
                   </div>
                 </div>
 
-                {/* Consent */}
                 <div className="flex items-start space-x-4 rounded-xl bg-gray-50 p-5 md:p-6">
                   <input
                     type="checkbox"

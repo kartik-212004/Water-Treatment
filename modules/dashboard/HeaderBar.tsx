@@ -16,7 +16,7 @@ export default function HeaderBar({ onLogout }: HeaderBarProps) {
           <div className="flex items-center space-x-3">
             <div>
               <h1 className="text-lg font-bold sm:text-xl">Admin Dashboard</h1>
-              <p className="text-xs text-gray-200 text-muted-foreground sm:text-sm">
+              <p className="text-xs text-gray-100 text-muted-foreground sm:text-sm">
                 Manage contaminants database
               </p>
             </div>
