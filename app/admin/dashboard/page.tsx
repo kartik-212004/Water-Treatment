@@ -4,27 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 import axios from "axios";
-import { Loader2, Plus, Trash2, Save, LogOut, Beaker, Edit, X, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 
 import ContaminantsNames from "@/lib/contaminants";
-
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Command,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from "@/components/ui/command";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Textarea } from "@/components/ui/textarea";
 
 import AddContaminantsForm from "@/modules/dashboard/AddContaminantsForm";
 import ExistingContaminantsList from "@/modules/dashboard/ExistingContaminantsList";
