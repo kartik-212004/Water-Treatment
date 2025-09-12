@@ -26,6 +26,10 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 
+import AddContaminantsForm from "@/modules/dashboard/AddContaminantsForm";
+import ExistingContaminantsList from "@/modules/dashboard/ExistingContaminantsList";
+import HeaderBar from "@/modules/dashboard/HeaderBar";
+
 interface Contaminant {
   id?: string;
   name: string;
@@ -229,308 +233,38 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="border-b bg-[#101935] text-white">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center space-x-3">
-              <div>
-                <h1 className="text-lg font-bold sm:text-xl">Admin Dashboard</h1>
-                <p className="text-xs text-gray-200 text-muted-foreground sm:text-sm">
-                  Manage contaminants database
-                </p>
-              </div>
-            </div>
-            <Button variant="outline" className="w-fit text-black" onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </div>
+      <HeaderBar onLogout={handleLogout} />
 
       <div className="container mx-auto px-4 py-4 sm:py-8">
         <div className="grid gap-4 sm:gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="flex flex-col gap-2 text-base sm:flex-row sm:items-center sm:text-lg">
-                  <Plus className="h-5 w-5" />
-                  <span>Add New Contaminants</span>
-                </CardTitle>
-                <CardDescription className="text-sm">
-                  Add one or more contaminants to the Patriots filtration database
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 sm:space-y-6">
-                {message.text && (
-                  <Alert variant={message.type === "error" ? "destructive" : "default"}>
-                    <AlertDescription className="text-sm">{message.text}</AlertDescription>
-                  </Alert>
-                )}
-
-                {contaminants.map((contaminant, index) => (
-                  <div key={index} className="space-y-3 rounded-lg border p-3 sm:space-y-4 sm:p-4">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="secondary" className="text-xs">
-                        Contaminant {index + 1}
-                      </Badge>
-                      {contaminants.length > 1 && (
-                        <Button variant="ghost" size="sm" onClick={() => removeContaminantField(index)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`name-${index}`}>Contaminant Name</Label>
-                      <Popover
-                        open={openComboboxes[`add-${index}`]}
-                        onOpenChange={(open) =>
-                          setOpenComboboxes({ ...openComboboxes, [`add-${index}`]: open })
-                        }>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={openComboboxes[`add-${index}`]}
-                            className="h-10 w-full justify-between text-sm">
-                            {contaminant.name
-                              ? uniqueContaminants.find((name) => name === contaminant.name)
-                              : "e.g., Arsenic"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="w-[90vw] max-w-[400px] p-0"
-                          side="bottom"
-                          align="start"
-                          sideOffset={5}>
-                          <Command>
-                            <CommandInput placeholder="Search contaminants..." className="h-9" />
-                            <CommandList className="max-h-[40vh]">
-                              <CommandEmpty>No contaminant found.</CommandEmpty>
-                              <CommandGroup>
-                                {uniqueContaminants.map((name: string, idx: number) => (
-                                  <CommandItem
-                                    key={`${name}-${idx}`}
-                                    value={name}
-                                    onSelect={(currentValue) => {
-                                      updateContaminant(
-                                        index,
-                                        "name",
-                                        currentValue === contaminant.name ? "" : currentValue
-                                      );
-                                      setOpenComboboxes({ ...openComboboxes, [`add-${index}`]: false });
-                                    }}>
-                                    {name}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`removal-${index}`}>Removal Rate</Label>
-                      <Input
-                        id={`removal-${index}`}
-                        placeholder="e.g., 99.9%"
-                        value={contaminant.removalRate}
-                        onChange={(e) => updateContaminant(index, "removalRate", e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`health-${index}`}>Health Risk Description</Label>
-                      <Textarea
-                        id={`health-${index}`}
-                        placeholder="Describe the health risks associated with this contaminant..."
-                        value={contaminant.healthRisk}
-                        onChange={(e) => updateContaminant(index, "healthRisk", e.target.value)}
-                        rows={4}
-                      />
-                    </div>
-                  </div>
-                ))}
-
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <Button
-                    variant="outline"
-                    onClick={addContaminantField}
-                    className="flex w-full items-center justify-center space-x-2 sm:w-auto">
-                    <Plus className="h-4 w-4" />
-                    <span className="text-sm">Add Another Contaminant</span>
-                  </Button>
-
-                  <Button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="flex w-full items-center justify-center space-x-2 sm:w-auto">
-                    {saving ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm">Saving...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4" />
-                        <span className="text-sm">Save All</span>
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <AddContaminantsForm
+              message={message}
+              contaminants={contaminants}
+              onRemove={removeContaminantField}
+              onUpdate={updateContaminant}
+              onAdd={addContaminantField}
+              onSave={handleSave}
+              saving={saving}
+              openComboboxes={openComboboxes}
+              setOpenComboboxes={(next) => setOpenComboboxes(next)}
+            />
           </div>
 
           <div className="mt-6 lg:mt-0">
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-base sm:text-lg">Existing Contaminants</CardTitle>
-                <CardDescription className="text-sm">
-                  Currently tracked contaminants ({existingContaminants.length})
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="max-h-[50vh] space-y-2 overflow-y-auto sm:space-y-3 lg:max-h-96">
-                  {loadingExisting ? (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : existingContaminants.length === 0 ? (
-                    <p className="py-4 text-center text-sm text-muted-foreground">No contaminants found</p>
-                  ) : (
-                    existingContaminants.map((contaminant) => (
-                      <div key={contaminant.id} className="rounded-lg border p-2 sm:p-3">
-                        {editingId === contaminant.id ? (
-                          <div className="space-y-2 sm:space-y-3">
-                            <div>
-                              <Label htmlFor={`edit-name-${contaminant.id}`} className="text-xs">
-                                Name
-                              </Label>
-                              <Popover open={editComboboxOpen} onOpenChange={setEditComboboxOpen}>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    aria-expanded={editComboboxOpen}
-                                    className="h-8 w-full justify-between text-sm">
-                                    {editForm.name
-                                      ? uniqueContaminants.find((name) => name === editForm.name)
-                                      : "Select name"}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent
-                                  className="w-[90vw] max-w-[400px] p-0"
-                                  side="bottom"
-                                  align="start"
-                                  sideOffset={5}>
-                                  <Command>
-                                    <CommandInput placeholder="Search contaminants..." className="h-9" />
-                                    <CommandList className="max-h-[40vh]">
-                                      <CommandEmpty>No contaminant found.</CommandEmpty>
-                                      <CommandGroup>
-                                        {uniqueContaminants.map((name: string, idx: number) => (
-                                          <CommandItem
-                                            key={`edit-${name}-${idx}`}
-                                            value={name}
-                                            onSelect={(currentValue) => {
-                                              setEditForm({
-                                                ...editForm,
-                                                name: currentValue === editForm.name ? "" : currentValue,
-                                              });
-                                              setEditComboboxOpen(false);
-                                            }}>
-                                            {name}
-                                          </CommandItem>
-                                        ))}
-                                      </CommandGroup>
-                                    </CommandList>
-                                  </Command>
-                                </PopoverContent>
-                              </Popover>
-                            </div>
-                            <div>
-                              <Label htmlFor={`edit-rate-${contaminant.id}`} className="text-xs">
-                                Removal Rate
-                              </Label>
-                              <Input
-                                id={`edit-rate-${contaminant.id}`}
-                                value={editForm.removalRate}
-                                onChange={(e) => setEditForm({ ...editForm, removalRate: e.target.value })}
-                                className="h-8 text-sm"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor={`edit-health-${contaminant.id}`} className="text-xs">
-                                Health Risk
-                              </Label>
-                              <Textarea
-                                id={`edit-health-${contaminant.id}`}
-                                value={editForm.healthRisk}
-                                onChange={(e) => setEditForm({ ...editForm, healthRisk: e.target.value })}
-                                rows={3}
-                                className="text-sm"
-                              />
-                            </div>
-                            <div className="flex flex-col gap-2 sm:flex-row">
-                              <Button
-                                size="sm"
-                                onClick={handleUpdateContaminant}
-                                className="h-7 flex-1 sm:flex-none">
-                                <Check className="mr-1 h-3 w-3" />
-                                <span className="text-xs">Save</span>
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={handleCancelEdit}
-                                className="h-7 flex-1 sm:flex-none">
-                                <X className="mr-1 h-3 w-3" />
-                                <span className="text-xs">Cancel</span>
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="mb-2 flex items-start justify-between gap-2">
-                              <h4 className="truncate text-sm font-medium sm:text-base">
-                                {contaminant.name}
-                              </h4>
-                              <div className="flex flex-shrink-0 items-center gap-1">
-                                <Badge variant="outline" className="px-1 text-xs">
-                                  {contaminant.removalRate}
-                                </Badge>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleEdit(contaminant)}
-                                  className="h-6 w-6 p-0">
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleDelete(contaminant.id!, contaminant.name)}
-                                  className="h-6 w-6 p-0 text-destructive hover:text-destructive">
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                            <p className="line-clamp-2 text-xs text-muted-foreground sm:text-sm">
-                              {contaminant.healthRisk}
-                            </p>
-                          </>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <ExistingContaminantsList
+              items={existingContaminants}
+              loadingExisting={loadingExisting}
+              editingId={editingId}
+              editForm={editForm}
+              setEditForm={(next) => setEditForm(next)}
+              onEdit={handleEdit}
+              onCancelEdit={handleCancelEdit}
+              onSaveEdit={handleUpdateContaminant}
+              onDelete={handleDelete}
+              editComboboxOpen={editComboboxOpen}
+              setEditComboboxOpen={(open) => setEditComboboxOpen(open)}
+            />
           </div>
         </div>
       </div>
