@@ -59,13 +59,13 @@ export default function ExistingContaminantsList({
   const uniqueContaminants = useMemo(() => Array.from(new Set(ContaminantsNames)), []);
 
   return (
-    <Card className="flex h-80 flex-col lg:h-96">
-      <CardHeader className="shrink-0 pb-4">
+    <Card>
+      <CardHeader className="pb-4">
         <CardTitle className="text-base sm:text-lg">Existing Contaminants</CardTitle>
         <CardDescription className="text-sm">Currently tracked contaminants ({items.length})</CardDescription>
       </CardHeader>
-      <CardContent className="min-h-0 flex-1 overflow-hidden">
-        <div className="max-h-[50vh] space-y-2 overflow-y-auto sm:space-y-3 lg:max-h-96">
+      <CardContent>
+        <div style={{ height: "400px" }} className="space-y-2 overflow-y-auto sm:space-y-3">
           {loadingExisting ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
