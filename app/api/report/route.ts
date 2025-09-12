@@ -55,7 +55,7 @@ async function determineUserEmail(pws_id: string, providedEmail?: string): Promi
   return { email: null, source: "none", isValid: false };
 }
 
-export async function handleReportRequest(req: NextRequest) {
+async function handleReportRequest(req: NextRequest) {
   try {
     await getContaminants();
 
