@@ -411,6 +411,12 @@ The application will be available at `http://localhost:3000`
 | `ADMIN_USERNAME`  | Admin panel username                 | ✅       |
 | `ADMIN_PASSWORD`  | Admin panel password                 | ✅       |
 
+
+## Klaviyo API Keys
+
+> Manage your API keys here: [Klaviyo API Keys](https://www.klaviyo.com/settings/account/api-keys)
+
+
 ## Database Schema
 
 ```mermaid
